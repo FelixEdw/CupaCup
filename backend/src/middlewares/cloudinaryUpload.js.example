@@ -1,0 +1,54 @@
+/**
+ * CONTOH PENGGUNAAN CDN (Cloudinary) UNTUK PENYIMPANAN GAMBAR
+ * 
+ * Karena saat ini aplikasi masih dalam tahap awal (Testing/MVP), 
+ * menyimpan gambar di server lokal (folder /uploads) sudah sangat cukup 
+ * dan jauh lebih mudah dikelola.
+ * 
+ * Namun, jika nanti akan naik ke tahap Production dan Anda tidak ingin 
+ * membebani server lokal, Anda bisa mengganti multer storage biasa 
+ * dengan multer-storage-cloudinary atau multer-s3 (Amazon S3).
+ * 
+ * Berikut adalah contoh implementasi menggunakan Cloudinary (Gratis & Mudah).
+ * 
+ * Cara Pakai Nanti:
+ * 1. npm install cloudinary multer-storage-cloudinary
+ * 2. Hapus isi `backend/src/middlewares/uploadMiddleware.js`
+ * 3. Ganti dengan kode di bawah ini.
+ * 4. Tambahkan CLOUDINARY_URL di .env Anda.
+ */
+
+const multer = require('multer');
+const { CloudinaryStorage } = require('multer-storage-cloudinary');
+const cloudinary = require('cloudinary').v2;
+
+// Konfigurasi otomatis diambil dari process.env.CLOUDINARY_URL
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET
+});
+
+const storage = new CloudinaryStorage({
+  cloudinary: cloudinary,
+  params: async (req, file) => {
+    // Tentukan folder di Cloudinary berdasarkan endpoint route
+    let folderName = 'matchup/others';
+    if (req.originalUrl.includes('/posts')) folderName = 'matchup/posts';
+    else if (req.originalUrl.includes('/users')) folderName = 'matchup/avatars';
+    else if (req.originalUrl.includes('/conversations')) folderName = 'matchup/chat';
+
+    return {
+      folder: folderName,
+      allowed_formats: ['jpeg', 'png', 'jpg', 'webp'],
+      transformation: [{ width: 1080, crop: 'limit' }] // Otomatis compress/resize
+    };
+  },
+});
+
+const upload = multer({
+  storage: storage,
+  limits: { fileSize: 5 * 1024 * 1024 }, // 5MB
+});
+
+module.exports = upload;

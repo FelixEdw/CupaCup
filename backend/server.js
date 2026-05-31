@@ -51,6 +51,7 @@ app.use('/api/auth',          require('./src/routes/authRoutes'));
 app.use('/api/users',         require('./src/routes/userRoutes'));
 app.use('/api/posts',         require('./src/routes/postRoutes'));
 app.use('/api/conversations', require('./src/routes/chatRoutes'));
+app.use('/api/stories',       require('./src/routes/storyRoutes'));
 
 // ─── Health Check ─────────────────────────────────────────────────────────────
 app.get('/api/health', (req, res) => {

@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { ArrowLeft, Send, Loader2, MessageCircle } from 'lucide-react';
 import { getConversations, startConversation, searchUsers } from '@/services/api';
+import StoryBar from '@/components/StoryBar';
 import { mediaUrl } from '@/services/api';
 import { useAuthStore } from '@/store';
 import { Conversation, User } from '@/types';
@@ -59,6 +60,8 @@ export default function MessagesPage() {
           className="input-dark"
         />
       </div>
+
+      {!search && <StoryBar />}
 
       {search ? (
         <div className="px-4 py-3">

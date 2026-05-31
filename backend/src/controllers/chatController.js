@@ -208,4 +208,25 @@ const sendMessage = async (req, res) => {
   }
 };
 
-module.exports = { getConversations, getMessages, startConversation, sendMessage, getOrCreateConversation, checkChatLimit };
+const getConversationInfo = async (req, res) => {
+  const userId = req.user.id;
+  const convId = parseInt(req.params.id);
+  try {
+    const [conv] = await db.query(
+      `SELECT c.id, u.id AS other_user_id, u.username, u.full_name, u.profile_pic_url
+       FROM conversations c
+       JOIN users u ON u.id = IF(c.participant_1 = ?, c.participant_2, c.participant_1)
+       WHERE c.id = ? AND (c.participant_1 = ? OR c.participant_2 = ?)`,
+      [userId, convId, userId, userId]
+    );
+    if (conv.length === 0) {
+      return res.status(404).json({ success: false, message: 'Percakapan tidak ditemukan.' });
+    }
+    return res.status(200).json({ success: true, data: conv[0] });
+  } catch (err) {
+    console.error('[Chat] getConversationInfo error:', err);
+    return res.status(500).json({ success: false, message: 'Terjadi kesalahan server.' });
+  }
+};
+
+module.exports = { getConversations, getMessages, startConversation, sendMessage, getOrCreateConversation, checkChatLimit, getConversationInfo };

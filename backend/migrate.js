@@ -95,6 +95,25 @@ async function migrate() {
     `CREATE INDEX IF NOT EXISTS idx_conv_participants  ON conversations(participant_1, participant_2)`,
     `CREATE INDEX IF NOT EXISTS idx_messages_conv_id   ON messages(conversation_id)`,
     `CREATE INDEX IF NOT EXISTS idx_notif_user_id      ON notifications(user_id)`,
+
+    `CREATE TABLE IF NOT EXISTS stories (
+      id         INT AUTO_INCREMENT PRIMARY KEY,
+      user_id    INT          NOT NULL,
+      media_url  VARCHAR(500) NOT NULL,
+      media_type VARCHAR(20)  DEFAULT 'image',
+      content    VARCHAR(300) DEFAULT NULL,
+      created_at TIMESTAMP    DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+    ) ENGINE=InnoDB`,
+
+    `CREATE TABLE IF NOT EXISTS story_views (
+      story_id   INT NOT NULL,
+      viewer_id  INT NOT NULL,
+      viewed_at  TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      PRIMARY KEY (story_id, viewer_id),
+      FOREIGN KEY (story_id) REFERENCES stories(id) ON DELETE CASCADE,
+      FOREIGN KEY (viewer_id) REFERENCES users(id) ON DELETE CASCADE
+    ) ENGINE=InnoDB`,
   ];
 
   for (let i = 0; i < steps.length; i++) {

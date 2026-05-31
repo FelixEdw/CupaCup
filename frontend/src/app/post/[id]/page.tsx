@@ -139,7 +139,7 @@ export default function PostPage() {
       const convRes = await startConversation(recipientId);
       if (convRes.success) {
         const shareText = `📌 Post dari @${post.username}: "${post.content?.slice(0, 80) || '(tanpa teks)'}..."`;
-        await sendMessage(convRes.data.id, shareText);
+        await sendMessage(convRes.data.id, shareText, post.repost_id || post.id);
         setSentTo(prev => new Set([...prev, recipientId]));
       }
     } catch {}

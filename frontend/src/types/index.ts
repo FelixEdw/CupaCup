@@ -82,3 +82,20 @@ export interface ApiResponse<T> {
   data: T;
   message?: string;
 }
+
+export interface Story {
+  id: number;
+  media_url: string;
+  media_type: 'image' | 'video';
+  content?: string;
+  created_at: string;
+  is_viewed: boolean;
+}
+
+export interface StoryGroup {
+  user_id: number;
+  username: string;
+  full_name: string;
+  profile_pic_url?: string;
+  stories: Story[];
+}

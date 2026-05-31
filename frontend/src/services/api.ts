@@ -1,6 +1,13 @@
-import { User, Post, ApiResponse } from '@/types';
+import { User, Post, ApiResponse, StoryGroup, Conversation } from '@/types';
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+let API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+
+if (typeof window !== 'undefined') {
+  const hostname = window.location.hostname;
+  if (hostname !== 'localhost' && hostname !== '127.0.0.1' && !hostname.startsWith('192.168.0.')) {
+    API_BASE = `http://${hostname}:3001`;
+  }
+}
 
 // Helper to get stored token
 const getToken = (): string | null => {
@@ -173,10 +180,34 @@ export async function getMessages(convId: number) {
   return apiFetch<any[]>(`/api/conversations/${convId}/messages`);
 }
 
+export async function getConversationInfo(convId: number) {
+  return apiFetch<Conversation>(`/api/conversations/${convId}`);
+}
+
 export async function sendMessage(convId: number, content: string, sharedPostId?: number) {
   return apiFetch<any>(`/api/conversations/${convId}/messages`, {
     method: 'POST',
     body: JSON.stringify({ content, shared_post_id: sharedPostId }),
+  });
+}
+
+export async function getStoryFeed() {
+  return apiFetch<StoryGroup[]>('/api/stories/feed');
+}
+
+export async function createStory(formData: FormData) {
+  const token = getToken();
+  const res = await fetch(`${API_BASE}/api/stories`, {
+    method: 'POST',
+    headers: token ? { Authorization: `Bearer ${token}` } : {},
+    body: formData,
+  });
+  return res.json();
+}
+
+export async function viewStory(storyId: number) {
+  return apiFetch<any>(`/api/stories/${storyId}/view`, {
+    method: 'POST',
   });
 }
 

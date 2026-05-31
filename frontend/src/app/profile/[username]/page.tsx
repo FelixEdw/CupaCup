@@ -263,11 +263,20 @@ export default function ProfilePage() {
                 className="aspect-square relative bg-white/5 cursor-pointer overflow-hidden"
               >
                 {post.media?.[0] ? (
-                  <img
-                    src={mediaUrl(post.media[0])}
-                    alt=""
-                    className="w-full h-full object-cover"
-                  />
+                  /\.(mp4|webm|ogg|mov|avi|mkv)(\?.*)?$/i.test(post.media[0]) ? (
+                    <video
+                      src={mediaUrl(post.media[0])}
+                      className="w-full h-full object-cover"
+                      muted
+                      playsInline
+                    />
+                  ) : (
+                    <img
+                      src={mediaUrl(post.media[0])}
+                      alt=""
+                      className="w-full h-full object-cover"
+                    />
+                  )
                 ) : (
                   <div className="w-full h-full flex items-center justify-center p-3">
                     <p className="text-white/60 text-xs text-center line-clamp-4">{post.content}</p>

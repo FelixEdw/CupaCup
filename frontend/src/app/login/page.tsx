@@ -77,7 +77,13 @@ function LoginContent() {
     }
   };
 
-  const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+  let API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+  if (typeof window !== 'undefined') {
+    const hostname = window.location.hostname;
+    if (hostname !== 'localhost' && hostname !== '127.0.0.1') {
+      API_BASE = `http://${hostname}:3001`;
+    }
+  }
 
   return (
     <div className="min-h-screen bg-black flex items-center justify-center px-4">

@@ -5,7 +5,7 @@ const fs     = require('fs');
 const UPLOAD_PATH = process.env.UPLOAD_PATH || './uploads';
 
 // Ensure upload directories exist
-['posts', 'avatars', 'chat'].forEach(dir => {
+['posts', 'avatars', 'chat', 'stories'].forEach(dir => {
   const fullPath = path.join(UPLOAD_PATH, dir);
   if (!fs.existsSync(fullPath)) fs.mkdirSync(fullPath, { recursive: true });
 });
@@ -16,6 +16,7 @@ const storage = multer.diskStorage({
     let subfolder = 'posts';
     if (req.baseUrl.includes('users')) subfolder = 'avatars';
     if (req.baseUrl.includes('chat') || req.baseUrl.includes('conversations')) subfolder = 'chat';
+    if (req.baseUrl.includes('stories')) subfolder = 'stories';
     cb(null, path.join(UPLOAD_PATH, subfolder));
   },
   filename: (req, file, cb) => {

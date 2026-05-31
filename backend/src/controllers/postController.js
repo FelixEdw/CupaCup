@@ -163,16 +163,23 @@ const repost = async (req, res) => {
   const userId = req.user.id;
   const postId = parseInt(req.params.id);
   try {
-    const [already] = await db.query('SELECT id FROM posts WHERE user_id = ? AND repost_id = ?', [userId, postId]);
+    let targetPostId = postId;
+    const [postRow] = await db.query('SELECT repost_id FROM posts WHERE id = ?', [postId]);
+    if (postRow.length > 0 && postRow[0].repost_id) {
+      targetPostId = postRow[0].repost_id;
+    }
+
+    const [already] = await db.query('SELECT id FROM posts WHERE user_id = ? AND repost_id = ?', [userId, targetPostId]);
     if (already.length > 0) {
       await db.query('DELETE FROM posts WHERE id = ?', [already[0].id]);
-      await db.query('UPDATE posts SET repost_count = GREATEST(repost_count - 1, 0) WHERE id = ?', [postId]);
+      await db.query('UPDATE posts SET repost_count = GREATEST(repost_count - 1, 0) WHERE id = ?', [targetPostId]);
       return res.status(200).json({ success: true, action: 'un-reposted' });
     }
-    await db.query('INSERT INTO posts (user_id, repost_id) VALUES (?, ?)', [userId, postId]);
-    await db.query('UPDATE posts SET repost_count = repost_count + 1 WHERE id = ?', [postId]);
+    await db.query('INSERT INTO posts (user_id, repost_id) VALUES (?, ?)', [userId, targetPostId]);
+    await db.query('UPDATE posts SET repost_count = repost_count + 1 WHERE id = ?', [targetPostId]);
     return res.status(201).json({ success: true, action: 'reposted' });
   } catch (err) {
+    console.error('[Post] repost error:', err);
     return res.status(500).json({ success: false, message: 'Terjadi kesalahan server.' });
   }
 };

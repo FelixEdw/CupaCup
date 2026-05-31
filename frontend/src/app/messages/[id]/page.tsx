@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { ArrowLeft, Send, Loader2 } from 'lucide-react';
-import { getMessages, sendMessage } from '@/services/api';
+import { getMessages, sendMessage, getConversationInfo } from '@/services/api';
 import { mediaUrl } from '@/services/api';
 import { useAuthStore } from '@/store';
 import { Message } from '@/types';
@@ -20,7 +20,7 @@ export default function ChatPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [input, setInput] = useState('');
   const [isSending, setIsSending] = useState(false);
-  const [otherUser, setOtherUser] = useState({ username: '', full_name: '' });
+  const [otherUser, setOtherUser] = useState({ username: '', full_name: '', profile_pic_url: '' });
 
   const bottomRef = useRef<HTMLDivElement>(null);
   const socketRef = useRef<Socket | null>(null);
@@ -34,14 +34,24 @@ export default function ChatPage() {
 
     const fetchMsgs = async () => {
       const res = await getMessages(convId);
-      if (res.success && res.data.length > 0) {
+      if (res.success) {
         setMessages(res.data);
-        const other = res.data.find((m: Message) => m.sender_id !== user?.id);
-        if (other) setOtherUser({ username: other.username || '', full_name: other.full_name || '' });
       }
       setIsLoading(false);
     };
 
+    const fetchConvInfo = async () => {
+      const res = await getConversationInfo(convId);
+      if (res.success && res.data) {
+        setOtherUser({
+          username: res.data.username || '',
+          full_name: res.data.full_name || '',
+          profile_pic_url: res.data.profile_pic_url || '',
+        });
+      }
+    };
+
+    fetchConvInfo();
     fetchMsgs();
 
     // Socket.IO for real-time
@@ -107,8 +117,12 @@ export default function ChatPage() {
         <button onClick={() => router.back()} className="text-white hover:text-white/70">
           <ArrowLeft size={22} />
         </button>
-        <div className="w-10 h-10 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center text-white font-bold">
-          {(otherUser.username || '?').charAt(0).toUpperCase()}
+        <div className="w-10 h-10 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center text-white font-bold overflow-hidden shrink-0">
+          {otherUser.profile_pic_url ? (
+            <img src={mediaUrl(otherUser.profile_pic_url)} alt={otherUser.username} className="w-full h-full object-cover" />
+          ) : (
+            (otherUser.username || '?').charAt(0).toUpperCase()
+          )}
         </div>
         <div>
           <p className="text-white font-semibold">{otherUser.full_name || otherUser.username || `Conversation ${convId}`}</p>
@@ -157,7 +171,20 @@ export default function ChatPage() {
                       onClick={() => router.push(`/profile/${msg.shared_post_username}`)}
                     >
                       {msg.shared_post_media_url ? (
-                        <img src={mediaUrl(msg.shared_post_media_url)} alt="" className="w-14 h-18 object-cover rounded-lg shrink-0" />
+                        /\.(mp4|webm|ogg|mov|avi|mkv)(\?.*)?$/i.test(msg.shared_post_media_url) ? (
+                          <video
+                            src={mediaUrl(msg.shared_post_media_url)}
+                            className="w-14 h-18 object-cover rounded-lg shrink-0"
+                            muted
+                            playsInline
+                          />
+                        ) : (
+                          <img
+                            src={mediaUrl(msg.shared_post_media_url)}
+                            alt=""
+                            className="w-14 h-18 object-cover rounded-lg shrink-0"
+                          />
+                        )
                       ) : (
                         <div className="w-14 h-18 bg-gradient-to-br from-purple-900 to-black rounded-lg shrink-0 flex items-center justify-center text-xs text-white/50 border border-white/5">
                           Note

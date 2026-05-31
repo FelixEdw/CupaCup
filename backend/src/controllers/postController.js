@@ -39,9 +39,10 @@ const attachMedia = async (posts) => {
 const getFeed = async (req, res) => {
   const viewerId = req.user.id;
   try {
-    // For MVP / TikTok style, Feed shows ALL posts globally (FYP style)
+    // For MVP / TikTok style, Feed shows ALL original posts globally (FYP style)
+    // Exclude repost markers (p.repost_id IS NOT NULL) — those are NOT original posts
     const [posts] = await buildPostQuery(
-      'WHERE p.parent_post_id IS NULL',
+      'WHERE p.parent_post_id IS NULL AND p.repost_id IS NULL',
       [],
       viewerId
     );
@@ -60,7 +61,7 @@ const getPublicFeed = async (req, res) => {
       `SELECT p.id, p.content, p.reply_count, p.repost_count, p.like_count, p.created_at,
               u.id AS user_id, u.username, u.full_name, u.profile_pic_url
        FROM posts p JOIN users u ON u.id = p.user_id
-       WHERE p.parent_post_id IS NULL
+       WHERE p.parent_post_id IS NULL AND p.repost_id IS NULL
        ORDER BY p.created_at DESC LIMIT 30`
     );
     const result = await attachMedia(posts);
@@ -77,7 +78,7 @@ const getUserPosts = async (req, res) => {
   try {
     const [userRows] = await db.query('SELECT id FROM users WHERE username = ?', [username]);
     if (userRows.length === 0) return res.status(404).json({ success: false, message: 'User tidak ditemukan.' });
-    const [posts] = await buildPostQuery('WHERE p.user_id = ? AND p.parent_post_id IS NULL', [userRows[0].id], viewerId);
+    const [posts] = await buildPostQuery('WHERE p.user_id = ? AND p.parent_post_id IS NULL AND p.repost_id IS NULL', [userRows[0].id], viewerId);
     const result = await attachMedia(posts);
     return res.status(200).json({ success: true, data: result });
   } catch (err) {
@@ -176,4 +177,74 @@ const repost = async (req, res) => {
   }
 };
 
-module.exports = { getFeed, getPublicFeed, getUserPosts, getPost, createPost, toggleLike, repost };
+// POST /api/posts/:id/save  — toggle bookmark/save
+const toggleSave = async (req, res) => {
+  const userId = req.user.id;
+  const postId = parseInt(req.params.id);
+  try {
+    const [exists] = await db.query('SELECT 1 FROM saved_posts WHERE user_id = ? AND post_id = ?', [userId, postId]);
+    if (exists.length > 0) {
+      await db.query('DELETE FROM saved_posts WHERE user_id = ? AND post_id = ?', [userId, postId]);
+      return res.status(200).json({ success: true, data: { action: 'unsaved' } });
+    } else {
+      await db.query('INSERT INTO saved_posts (user_id, post_id) VALUES (?, ?)', [userId, postId]);
+      return res.status(200).json({ success: true, data: { action: 'saved' } });
+    }
+  } catch (err) {
+    console.error('[Post] toggleSave error:', err);
+    return res.status(500).json({ success: false, message: 'Terjadi kesalahan server.' });
+  }
+};
+
+// GET /api/posts/saved  — get saved posts for current user
+const getSavedPosts = async (req, res) => {
+  const userId = req.user.id;
+  try {
+    const [posts] = await db.query(
+      `SELECT p.id, p.content, p.reply_count, p.repost_count, p.like_count, p.created_at,
+              p.parent_post_id, p.repost_id,
+              u.id AS user_id, u.username, u.full_name, u.profile_pic_url,
+              (SELECT COUNT(*) FROM likes WHERE user_id = ? AND post_id = p.id) AS is_liked,
+              1 AS is_saved
+       FROM saved_posts sp
+       JOIN posts p ON p.id = sp.post_id
+       JOIN users u ON u.id = p.user_id
+       WHERE sp.user_id = ?
+       ORDER BY sp.created_at DESC LIMIT 50`,
+      [userId, userId]
+    );
+    const result = await attachMedia(posts);
+    return res.status(200).json({ success: true, data: result });
+  } catch (err) {
+    console.error('[Post] getSavedPosts error:', err);
+    return res.status(500).json({ success: false, message: 'Terjadi kesalahan server.' });
+  }
+};
+
+// GET /api/posts/reposted/:userId  — get reposted posts for a user
+const getRepostedPosts = async (req, res) => {
+  const userId = parseInt(req.params.userId);
+  const viewerId = req.user?.id || null;
+  try {
+    const [posts] = await db.query(
+      `SELECT p.id, p.content, p.reply_count, p.repost_count, p.like_count, p.created_at,
+              p.parent_post_id, p.repost_id,
+              u.id AS user_id, u.username, u.full_name, u.profile_pic_url,
+              IF(?, (SELECT COUNT(*) FROM likes WHERE user_id = ? AND post_id = p.id), 0) AS is_liked,
+              1 AS is_reposted
+       FROM posts rp_marker
+       JOIN posts p ON p.id = rp_marker.repost_id
+       JOIN users u ON u.id = p.user_id
+       WHERE rp_marker.user_id = ? AND rp_marker.repost_id IS NOT NULL
+       ORDER BY rp_marker.created_at DESC LIMIT 30`,
+      [viewerId ? 1 : 0, viewerId, userId]
+    );
+    const result = await attachMedia(posts);
+    return res.status(200).json({ success: true, data: result });
+  } catch (err) {
+    console.error('[Post] getRepostedPosts error:', err);
+    return res.status(500).json({ success: false, message: 'Terjadi kesalahan server.' });
+  }
+};
+
+module.exports = { getFeed, getPublicFeed, getUserPosts, getPost, createPost, toggleLike, repost, toggleSave, getSavedPosts, getRepostedPosts };

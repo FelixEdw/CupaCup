@@ -1,6 +1,6 @@
 const express = require('express');
 const router  = express.Router();
-const { getFeed, getPublicFeed, getUserPosts, getPost, createPost, toggleLike, repost } = require('../controllers/postController');
+const { getFeed, getPublicFeed, getUserPosts, getPost, createPost, toggleLike, repost, toggleSave, getSavedPosts, getRepostedPosts } = require('../controllers/postController');
 const { authenticate } = require('../middlewares/authMiddleware');
 const { postImages }   = require('../middlewares/uploadMiddleware');
 
@@ -13,12 +13,15 @@ const optAuth = (req, res, next) => {
   next();
 };
 
-router.get('/feed',          authenticate, getFeed);
-router.get('/public',        getPublicFeed);
-router.get('/user/:username', optAuth, getUserPosts);
-router.get('/:id',           optAuth, getPost);
-router.post('/',             authenticate, postImages, createPost);
-router.post('/:id/like',     authenticate, toggleLike);
-router.post('/:id/repost',   authenticate, repost);
+router.get('/feed',              authenticate, getFeed);
+router.get('/public',            getPublicFeed);
+router.get('/saved',             authenticate, getSavedPosts);
+router.get('/user/:username',    optAuth, getUserPosts);
+router.get('/reposted/:userId',  optAuth, getRepostedPosts);
+router.get('/:id',               optAuth, getPost);
+router.post('/',                 authenticate, postImages, createPost);
+router.post('/:id/like',         authenticate, toggleLike);
+router.post('/:id/repost',       authenticate, repost);
+router.post('/:id/save',         authenticate, toggleSave);
 
 module.exports = router;

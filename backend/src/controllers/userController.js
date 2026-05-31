@@ -49,10 +49,10 @@ const toggleFollow = async (req, res) => {
     const [exists] = await db.query('SELECT 1 FROM follows WHERE follower_id = ? AND followed_id = ?', [followerId, followedId]);
     if (exists.length > 0) {
       await db.query('DELETE FROM follows WHERE follower_id = ? AND followed_id = ?', [followerId, followedId]);
-      return res.status(200).json({ success: true, action: 'unfollowed' });
+      return res.status(200).json({ success: true, data: { action: 'unfollowed' } });
     } else {
       await db.query('INSERT INTO follows (follower_id, followed_id) VALUES (?, ?)', [followerId, followedId]);
-      return res.status(200).json({ success: true, action: 'followed' });
+      return res.status(200).json({ success: true, data: { action: 'followed' } });
     }
   } catch (err) {
     console.error('[User] toggleFollow error:', err);

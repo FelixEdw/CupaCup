@@ -1,0 +1,73 @@
+Technical Specification & Prompt:
+MatchUp Frontend (TikTok Lite)
+1. Konteks Proyek & Objektif
+Dokumen ini dirancang sebagai panduan instruksional bagi AI Coding Agent. Tugas Anda
+adalah mengimplementasikan antarmuka (frontend) untuk MatchUp, sebuah proyek Super App.
+Fokus utama fase ini adalah membangun fitur short video feed dengan interaksi yang identik
+dengan TikTok (vertical swipe), namun dengan arsitektur yang sangat ringan (lite).
+Kondisi Backend: Backend sudah dibangun menggunakan Express.js dan MySQL. Sistem ini
+sudah memiliki arsitektur untuk postController, autentikasi (Passport.js), dan interaksi real-time
+(Socket.io untuk DM/Chat). File di-serve melalui Multer dari direktori uploads/.
+2. Tech Stack Requirements
+AI harus menggunakan tumpukan teknologi berikut secara ketat untuk menjaga ukuran bundle
+seminimal mungkin:
+● Framework Inti: Next.js (Gunakan App Router atau Pages Router sesuai standar
+terbaru).
+● Styling: Tailwind CSS (Pendekatan utility-first murni).
+● Animasi Transisi: Framer Motion (Untuk gesture dan swipe antar video).
+● State Management: Zustand (Tinggalkan Redux. Gunakan Zustand untuk menyimpan
+state video aktif, sesi pengguna, dan data feed).
+● Pemutar Video: Native HTML5 <video>.
+3. Arsitektur Komponen Utama
+A. Komponen VideoFeed (The Infinite Scroller)
+Ini adalah komponen paling krusial. AI harus mengimplementasikan logika berikut:
+● Virtualization/Windowing: Jangan me-render seluruh video di DOM. Hanya render
+maksimal 3-5 komponen video sekaligus (video sebelumnya, video saat ini, dan 1-3 video
+berikutnya di buffer).
+● Intersection Observer API: Gunakan API ini untuk mendeteksi komponen video mana
+yang saat ini berada di viewport (visibilitas > 75%).
+● Autoplay Logic: Jika sebuah video masuk viewport, picu videoRef.current.play(). Jika
+keluar dari viewport, picu videoRef.current.pause() dan kembalikan durasi ke 0 jika
+diperlukan.
+B. Komponen VideoPlayer
+Komponen tunggal untuk me-render video. Harus membungkus tag <video> HTML5 dengan
+atribut berikut:<video
+src={videoUrl}
+loop
+playsInline
+muted={isMuted} // Mulai dengan muted untuk bypass kebijakan
+autoplay browser
+className="w-full h-full object-cover"
+/>
+C. Komponen SidebarInteract & BottomInfo
+● SidebarInteract: Melayang di sisi kanan bawah. Berisi tombol Like, Comment,
+Bookmark, dan Share.
+● BottomInfo: Melayang di kiri bawah. Berisi nama pengguna (uploader), caption, dan
+ticker musik yang digunakan.
+4. Integrasi Backend (Express.js)
+AI harus membuat services atau hooks (misalnya SWR atau React Query, atau fetch bawaan)
+untuk terhubung ke backend yang ada:
+Fungsionalitas Ekspektasi Implementasi Frontend
+Fetch Video Feed Ambil data dari endpoint posts. Harus
+mendukung pagination (mengirimkan
+parameter page atau cursor). Gabungkan hasil
+fetch baru ke dalam state array di Zustand.
+Media Serving URL video harus diarahkan ke endpoint statis
+Express.js (konfigurasi URL dasar harus ada di
+.env.local sebagai NEXT_PUBLIC_API_URL).
+Like / Interaksi Gunakan Optimistic UI Updates. Saat tombol
+like ditekan, ubah warna tombol seketika di
+frontend sebelum respons API selesai diproses
+untuk memberikan kesan sangat cepat (lite).
+5. Instruksi Khusus untuk AI Agent
+1. Mulailah dengan menginisialisasi proyek Next.js dan membersihkan kode boilerplate.
+2. Konfigurasikan Tailwind CSS.
+3. Buat store Zustand di direktori /store untuk mengatur logika indeks video yang sedang
+aktif.
+4. Tulis komponen VideoPlayer terlebih dahulu, pastikan tampilannya memenuhi seluruh
+tinggi layar perangkat (h-screen/dvh).
+5. Bungkus VideoPlayer ke dalam komponen Feed, lalu terapkan logika
+IntersectionObserver untuk *play/pause* otomatis.
+6. Tambahkan efek snapping saat scroll menggunakan utilitas CSS (snap-y snap-mandatory
+pada container, dan snap-start pada tiap item video).
+7. Tuliskan seluruh kode secara modular (pisahkan komponen UI dan logika *fetching*).

@@ -79,6 +79,16 @@ async function migrate() {
       FOREIGN KEY (actor_id) REFERENCES users(id) ON DELETE SET NULL
     ) ENGINE=InnoDB`,
 
+    // Saved posts (bookmarks)
+    `CREATE TABLE IF NOT EXISTS saved_posts (
+      user_id    INT NOT NULL,
+      post_id    INT NOT NULL,
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      PRIMARY KEY (user_id, post_id),
+      FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+      FOREIGN KEY (post_id) REFERENCES posts(id) ON DELETE CASCADE
+    ) ENGINE=InnoDB`,
+
     // Indexes
     `CREATE INDEX IF NOT EXISTS idx_users_username    ON users(username)`,
     `CREATE INDEX IF NOT EXISTS idx_posts_created_at  ON posts(created_at)`,

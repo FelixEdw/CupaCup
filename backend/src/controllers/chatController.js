@@ -98,7 +98,8 @@ const getMessages = async (req, res) => {
               m.message_type, m.is_read, m.created_at,
               u.username, u.full_name, u.profile_pic_url,
               p.content AS shared_post_content,
-              pu.username AS shared_post_username
+              pu.username AS shared_post_username,
+              (SELECT media_url FROM post_media WHERE post_id = p.id ORDER BY sort_order ASC LIMIT 1) AS shared_post_media_url
        FROM messages m
        JOIN users u ON u.id = m.sender_id
        LEFT JOIN posts p ON p.id = m.shared_post_id

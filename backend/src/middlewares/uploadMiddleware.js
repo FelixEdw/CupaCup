@@ -25,15 +25,35 @@ const storage = multer.diskStorage({
   },
 });
 
+// ── File type filter ──────────────────────────────────────────────────────────
+// Allowed image types
+const IMAGE_MIME = /^image\/(jpeg|jpg|png|gif|webp)$/i;
+const IMAGE_EXT  = /\.(jpeg|jpg|png|gif|webp)$/i;
+
+// Allowed video types
+const VIDEO_MIME = /^video\/(mp4|webm|ogg|quicktime|x-msvideo|x-matroska|mpeg)$/i;
+const VIDEO_EXT  = /\.(mp4|webm|ogg|mov|avi|mkv|mpeg|mpg)$/i;
+
 const fileFilter = (req, file, cb) => {
-  const allowed = /jpeg|jpg|png|gif|webp/;
-  const extOk   = allowed.test(path.extname(file.originalname).toLowerCase());
-  const mimeOk  = allowed.test(file.mimetype);
-  if (extOk && mimeOk) return cb(null, true);
-  cb(new Error('Hanya file gambar (jpeg, jpg, png, gif, webp) yang diizinkan.'));
+  const ext = path.extname(file.originalname).toLowerCase();
+
+  const isImage = IMAGE_MIME.test(file.mimetype) || IMAGE_EXT.test(ext);
+  const isVideo = VIDEO_MIME.test(file.mimetype) || VIDEO_EXT.test(ext);
+
+  if (isImage || isVideo) return cb(null, true);
+
+  cb(new Error(
+    `Tipe file tidak didukung: ${file.mimetype}. ` +
+    'Gunakan JPEG, PNG, GIF, WebP, MP4, WebM, MOV, atau AVI.'
+  ));
 };
 
-const MAX_MB = parseInt(process.env.MAX_FILE_SIZE_MB) || 5;
+// ── Size limits ───────────────────────────────────────────────────────────────
+const IMAGE_MAX_MB = parseInt(process.env.MAX_IMAGE_SIZE_MB) || 5;
+const VIDEO_MAX_MB = parseInt(process.env.MAX_VIDEO_SIZE_MB) || 50; // video butuh lebih besar
+
+// Multer instance with higher limit (video can be up to 50 MB)
+const MAX_MB = Math.max(IMAGE_MAX_MB, VIDEO_MAX_MB);
 
 const upload = multer({
   storage,
@@ -43,6 +63,6 @@ const upload = multer({
 
 // Exported presets
 module.exports = {
-  postImages:  upload.array('images', 4),       // max 4 images for posts
-  singleImage: upload.single('image'),           // avatar or chat image
+  postImages:  upload.array('images', 4),   // up to 4 images OR 1 video for posts
+  singleImage: upload.single('image'),       // avatar or chat image
 };

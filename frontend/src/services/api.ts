@@ -211,6 +211,18 @@ export async function viewStory(storyId: number) {
   });
 }
 
+export async function deletePost(postId: number) {
+  return apiFetch<any>(`/api/posts/${postId}`, {
+    method: 'DELETE',
+  });
+}
+
+export async function deleteStory(storyId: number) {
+  return apiFetch<any>(`/api/stories/${storyId}`, {
+    method: 'DELETE',
+  });
+}
+
 // ─── Media URL Helper ─────────────────────────────────────────────────────────
 
 export function mediaUrl(path?: string): string {

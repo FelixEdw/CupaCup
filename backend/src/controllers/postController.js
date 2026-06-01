@@ -254,4 +254,33 @@ const getRepostedPosts = async (req, res) => {
   }
 };
 
-module.exports = { getFeed, getPublicFeed, getUserPosts, getPost, createPost, toggleLike, repost, toggleSave, getSavedPosts, getRepostedPosts };
+const deletePost = async (req, res) => {
+  const userId = req.user.id;
+  const postId = parseInt(req.params.id);
+  try {
+    const [postRows] = await db.query('SELECT user_id, parent_post_id, repost_id FROM posts WHERE id = ?', [postId]);
+    if (postRows.length === 0) {
+      return res.status(404).json({ success: false, message: 'Post tidak ditemukan.' });
+    }
+    const post = postRows[0];
+    if (post.user_id !== userId) {
+      return res.status(403).json({ success: false, message: 'Anda tidak memiliki akses untuk menghapus post ini.' });
+    }
+
+    if (post.parent_post_id) {
+      await db.query('UPDATE posts SET reply_count = GREATEST(reply_count - 1, 0) WHERE id = ?', [post.parent_post_id]);
+    }
+    if (post.repost_id) {
+      await db.query('UPDATE posts SET repost_count = GREATEST(repost_count - 1, 0) WHERE id = ?', [post.repost_id]);
+    }
+
+    await db.query('DELETE FROM posts WHERE id = ?', [postId]);
+    return res.status(200).json({ success: true, message: 'Post berhasil dihapus.' });
+  } catch (err) {
+    console.error('[Post] deletePost error:', err);
+    return res.status(500).json({ success: false, message: 'Terjadi kesalahan server.' });
+  }
+};
+
+module.exports = { getFeed, getPublicFeed, getUserPosts, getPost, createPost, toggleLike, repost, toggleSave, getSavedPosts, getRepostedPosts, deletePost };
+

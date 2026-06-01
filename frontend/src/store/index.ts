@@ -71,6 +71,7 @@ interface FeedStore {
   toggleMute: () => void;
   setLoading: (loading: boolean) => void;
   optimisticLike: (postId: number) => void;
+  removePost: (postId: number) => void;
   resetFeed: () => void;
 }
 
@@ -107,6 +108,11 @@ export const useFeedStore = create<FeedStore>((set) => ({
           like_count: nowLiked ? p.like_count + 1 : Math.max(0, p.like_count - 1),
         };
       }),
+    })),
+
+  removePost: (postId) =>
+    set((state) => ({
+      posts: state.posts.filter((p) => p.id !== postId),
     })),
 
   // Reset feed so it refetches from scratch

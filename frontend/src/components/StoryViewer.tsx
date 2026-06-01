@@ -1,10 +1,11 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import { X, Play, Pause } from 'lucide-react';
+import { X, Play, Pause, Trash2, Loader2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { StoryGroup } from '@/types';
-import { mediaUrl, viewStory } from '@/services/api';
+import { mediaUrl, viewStory, deleteStory } from '@/services/api';
+import { useAuthStore } from '@/store';
 
 interface StoryViewerProps {
   group: StoryGroup;
@@ -14,12 +15,39 @@ interface StoryViewerProps {
 }
 
 export default function StoryViewer({ group, onClose, onNextUser, onPrevUser }: StoryViewerProps) {
+  const { user } = useAuthStore();
   const [activeIndex, setActiveIndex] = useState(0);
   const [progress, setProgress] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
   const progressInterval = useRef<NodeJS.Timeout | null>(null);
 
   const activeStory = group.stories[activeIndex];
+  const isMyStory = user?.id === group.user_id;
+
+  const handleDelete = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setIsPaused(true);
+    if (!window.confirm('Apakah Anda yakin ingin menghapus story ini?')) {
+      setIsPaused(false);
+      return;
+    }
+    setIsDeleting(true);
+    try {
+      const res = await deleteStory(activeStory.id);
+      if (res.success) {
+        onClose(); // Close viewer and trigger refetch
+      } else {
+        alert(res.message || 'Gagal menghapus story.');
+        setIsPaused(false);
+      }
+    } catch {
+      alert('Terjadi kesalahan saat menghapus story.');
+      setIsPaused(false);
+    } finally {
+      setIsDeleting(false);
+    }
+  };
 
   // Reset active story index when user group changes
   useEffect(() => {
@@ -135,6 +163,15 @@ export default function StoryViewer({ group, onClose, onNextUser, onPrevUser }: 
         </div>
 
         <div className="flex items-center gap-3">
+          {isMyStory && (
+            <button
+              onClick={handleDelete}
+              disabled={isDeleting}
+              className="text-red-500 hover:text-red-400 p-2 transition-colors duration-150"
+            >
+              {isDeleting ? <Loader2 size={20} className="animate-spin" /> : <Trash2 size={20} />}
+            </button>
+          )}
           <button
             onClick={(e) => { e.stopPropagation(); setIsPaused(p => !p); }}
             className="text-white hover:opacity-80 p-2"

@@ -105,8 +105,28 @@ const viewStory = async (req, res) => {
   }
 };
 
+const deleteStory = async (req, res) => {
+  const userId = req.user.id;
+  const storyId = parseInt(req.params.id);
+  try {
+    const [storyRows] = await db.query('SELECT user_id FROM stories WHERE id = ?', [storyId]);
+    if (storyRows.length === 0) {
+      return res.status(404).json({ success: false, message: 'Story tidak ditemukan.' });
+    }
+    if (storyRows[0].user_id !== userId) {
+      return res.status(403).json({ success: false, message: 'Anda tidak memiliki akses untuk menghapus story ini.' });
+    }
+    await db.query('DELETE FROM stories WHERE id = ?', [storyId]);
+    return res.status(200).json({ success: true, message: 'Story berhasil dihapus.' });
+  } catch (err) {
+    console.error('[Story] deleteStory error:', err);
+    return res.status(500).json({ success: false, message: 'Terjadi kesalahan server.' });
+  }
+};
+
 module.exports = {
   createStory,
   getStoryFeed,
   viewStory,
+  deleteStory,
 };

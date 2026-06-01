@@ -2,8 +2,8 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { ArrowLeft, Heart, MessageCircle, Repeat2, Share2, Bookmark, Loader2, Send, X, Search } from 'lucide-react';
-import { getPost, toggleLike, repost as repostApi, toggleSave, createReply, searchUsers, startConversation, sendMessage, getConversations } from '@/services/api';
+import { ArrowLeft, Heart, MessageCircle, Repeat2, Share2, Bookmark, Loader2, Send, X, Search, Trash2 } from 'lucide-react';
+import { getPost, toggleLike, repost as repostApi, toggleSave, createReply, searchUsers, startConversation, sendMessage, getConversations, deletePost } from '@/services/api';
 import { mediaUrl } from '@/services/api';
 import { useAuthStore, useFeedStore } from '@/store';
 import { Post, User, Conversation } from '@/types';
@@ -17,11 +17,12 @@ export default function PostPage() {
   const router = useRouter();
   const postId = Number(params.id);
   const { isAuthenticated, user } = useAuthStore();
-  const { optimisticLike } = useFeedStore();
+  const { optimisticLike, removePost } = useFeedStore();
 
   const [post, setPost] = useState<Post | null>(null);
   const [replies, setReplies] = useState<Post[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const [isReposted, setIsReposted] = useState(false);
   const [isSaved, setIsSaved] = useState(false);
@@ -48,6 +49,24 @@ export default function PostPage() {
     }
     setIsLoading(false);
   }, [postId]);
+
+  const handleDeletePost = async () => {
+    if (!window.confirm('Apakah Anda yakin ingin menghapus post ini?')) return;
+    setIsDeleting(true);
+    try {
+      const res = await deletePost(postId);
+      if (res.success) {
+        removePost(postId);
+        router.back();
+      } else {
+        alert(res.message || 'Gagal menghapus post.');
+      }
+    } catch {
+      alert('Terjadi kesalahan saat menghapus post.');
+    } finally {
+      setIsDeleting(false);
+    }
+  };
 
   useEffect(() => { fetchPost(); }, [fetchPost]);
 
@@ -176,6 +195,20 @@ export default function PostPage() {
           <ArrowLeft size={24} />
         </button>
         <h1 className="text-white font-bold text-xl">Post</h1>
+        {user?.id === post.user_id && (
+          <button
+            onClick={handleDeletePost}
+            disabled={isDeleting}
+            className="ml-auto text-red-500 hover:text-red-400 p-1 flex items-center gap-1.5 font-semibold text-sm transition-all"
+          >
+            {isDeleting ? (
+              <Loader2 size={18} className="animate-spin" />
+            ) : (
+              <Trash2 size={18} />
+            )}
+            Hapus
+          </button>
+        )}
       </div>
 
       {/* Main post */}

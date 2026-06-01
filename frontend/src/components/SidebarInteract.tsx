@@ -2,10 +2,10 @@
 
 import { motion, AnimatePresence } from 'framer-motion';
 import { createPortal } from 'react-dom';
-import { Heart, MessageCircle, Repeat2, Share2, Bookmark, X, Search, Send, Loader2 } from 'lucide-react';
+import { Heart, MessageCircle, Repeat2, Share2, Bookmark, X, Search, Send, Loader2, Trash2 } from 'lucide-react';
 import { Post, User, Conversation } from '@/types';
 import { useAuthStore, useFeedStore } from '@/store';
-import { toggleLike, repost, toggleSave, searchUsers, startConversation, sendMessage, getConversations, mediaUrl } from '@/services/api';
+import { toggleLike, repost, toggleSave, searchUsers, startConversation, sendMessage, getConversations, mediaUrl, deletePost } from '@/services/api';
 import { useState, useCallback, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 
@@ -16,7 +16,7 @@ interface SidebarInteractProps {
 
 export default function SidebarInteract({ post, onComment }: SidebarInteractProps) {
   const { isAuthenticated, user } = useAuthStore();
-  const { optimisticLike } = useFeedStore();
+  const { optimisticLike, removePost } = useFeedStore();
   const router = useRouter();
 
   const [bookmarked, setBookmarked] = useState(false);
@@ -25,6 +25,7 @@ export default function SidebarInteract({ post, onComment }: SidebarInteractProp
   const [repostCount, setRepostCount] = useState(post.repost_count);
   const [isRepostLoading, setIsRepostLoading] = useState(false);
   const [isSaveLoading, setIsSaveLoading] = useState(false);
+  const [isDeleteLoading, setIsDeleteLoading] = useState(false);
 
   // Share modal state
   const [showShare, setShowShare] = useState(false);
@@ -83,6 +84,23 @@ export default function SidebarInteract({ post, onComment }: SidebarInteractProp
       setBookmarked(wasBookmarked);
     } finally {
       setIsSaveLoading(false);
+    }
+  };
+
+  const handleDeletePost = async () => {
+    if (!window.confirm('Apakah Anda yakin ingin menghapus post ini?')) return;
+    setIsDeleteLoading(true);
+    try {
+      const res = await deletePost(post.id);
+      if (res.success) {
+        removePost(post.id);
+      } else {
+        alert(res.message || 'Gagal menghapus post.');
+      }
+    } catch {
+      alert('Terjadi kesalahan saat menghapus post.');
+    } finally {
+      setIsDeleteLoading(false);
     }
   };
 
@@ -251,6 +269,25 @@ export default function SidebarInteract({ post, onComment }: SidebarInteractProp
           </div>
           <span className="text-white text-xs font-semibold drop-shadow-md">Share</span>
         </motion.button>
+
+        {/* Delete (only for owner) */}
+        {isMyPost && (
+          <motion.button
+            onClick={handleDeletePost}
+            className="flex flex-col items-center gap-1.5 group"
+            whileTap={{ scale: 0.85 }}
+            disabled={isDeleteLoading}
+          >
+            <div className="w-14 h-14 rounded-full bg-red-500/20 group-hover:bg-red-500/30 flex items-center justify-center transition-all">
+              {isDeleteLoading ? (
+                <Loader2 size={30} className="text-red-500 animate-spin" />
+              ) : (
+                <Trash2 size={30} className="text-red-500" />
+              )}
+            </div>
+            <span className="text-red-500 text-xs font-semibold drop-shadow-md">Delete</span>
+          </motion.button>
+        )}
 
         {/* Music disc */}
         <motion.div

@@ -12,6 +12,10 @@ import Link from 'next/link';
 import { formatDistanceToNow } from 'date-fns';
 import { id } from 'date-fns/locale';
 
+function isVideoUrl(url: string): boolean {
+  return /\.(mp4|webm|ogg|mov|avi|mkv)(\?.*)?$/i.test(url);
+}
+
 export default function PostPage() {
   const params = useParams();
   const router = useRouter();
@@ -236,10 +240,26 @@ export default function PostPage() {
 
         {/* Media */}
         {post.media?.length > 0 && (
-          <div className={`grid gap-2 mb-4 rounded-xl overflow-hidden ${post.media.length === 1 ? 'grid-cols-1' : 'grid-cols-2'}`}>
-            {post.media.map((url, i) => (
-              <img key={i} src={mediaUrl(url)} alt="" className="w-full object-cover rounded-lg" />
-            ))}
+          <div className={`grid gap-3 mb-4 rounded-xl overflow-hidden ${post.media.length === 1 ? 'grid-cols-1' : 'grid-cols-2'}`}>
+            {post.media.map((url, i) => {
+              const isVid = isVideoUrl(url);
+              return isVid ? (
+                <video
+                  key={i}
+                  src={mediaUrl(url)}
+                  className="w-full rounded-xl object-contain max-h-[60vh] bg-zinc-950 border border-white/5 shadow-inner"
+                  controls
+                  playsInline
+                />
+              ) : (
+                <img
+                  key={i}
+                  src={mediaUrl(url)}
+                  alt=""
+                  className="w-full object-cover rounded-xl max-h-[60vh] border border-white/5 shadow"
+                />
+              );
+            })}
           </div>
         )}
 

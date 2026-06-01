@@ -1,8 +1,9 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import { X, Play, Pause, Trash2, Loader2 } from 'lucide-react';
+import { X, Play, Pause, Trash2, Loader2, ChevronLeft, ChevronRight } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { createPortal } from 'react-dom';
 import { StoryGroup } from '@/types';
 import { mediaUrl, viewStory, deleteStory } from '@/services/api';
 import { useAuthStore } from '@/store';
@@ -21,6 +22,11 @@ export default function StoryViewer({ group, onClose, onNextUser, onPrevUser }: 
   const [isPaused, setIsPaused] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const progressInterval = useRef<NodeJS.Timeout | null>(null);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const activeStory = group.stories[activeIndex];
   const isMyStory = user?.id === group.user_id;
@@ -115,116 +121,147 @@ export default function StoryViewer({ group, onClose, onNextUser, onPrevUser }: 
     }
     return `${hours}j yang lalu`;
   };
+  if (!mounted || typeof document === 'undefined') return null;
 
-  return (
-    <motion.div
-      initial={{ opacity: 0, scale: 0.95 }}
-      animate={{ opacity: 1, scale: 1 }}
-      exit={{ opacity: 0, scale: 0.95 }}
-      className="fixed inset-0 z-50 bg-black flex flex-col justify-between select-none"
-      onTouchStart={() => setIsPaused(true)}
-      onTouchEnd={() => setIsPaused(false)}
-      onMouseDown={() => setIsPaused(true)}
-      onMouseUp={() => setIsPaused(false)}
+  return createPortal(
+    <div
+      onClick={onClose}
+      className="fixed inset-0 z-[100] bg-black/85 backdrop-blur-md flex items-center justify-center p-0 sm:p-4 select-none"
     >
-      {/* Progress Bars */}
-      <div className="absolute top-4 left-4 right-4 z-50 flex gap-1.5">
-        {group.stories.map((story, idx) => (
-          <div key={story.id} className="h-1 flex-1 bg-white/20 rounded-full overflow-hidden">
-            <div
-              className="h-full bg-white transition-all ease-linear"
-              style={{
-                width:
-                  idx < activeIndex
-                    ? '100%'
-                    : idx === activeIndex
-                    ? `${progress}%`
-                    : '0%',
-              }}
-            />
-          </div>
-        ))}
-      </div>
+      {/* Outer wrapper to hold modal card and floating navigation buttons */}
+      <div
+        onClick={(e) => e.stopPropagation()}
+        className="relative flex items-center justify-center w-full h-full sm:max-h-[85vh] sm:max-w-[420px] sm:aspect-[9/16]"
+      >
+        {/* Floating Prev Button (Left) - visible on md screens */}
+        <button
+          onClick={(e) => { e.stopPropagation(); handlePrev(); }}
+          className="absolute -left-16 hidden md:flex items-center justify-center w-11 h-11 rounded-full bg-white/10 hover:bg-white/20 border border-white/20 text-white transition-all active:scale-95 z-50 shadow-lg"
+        >
+          <ChevronLeft size={24} />
+        </button>
 
-      {/* Story Header */}
-      <div className="absolute top-8 left-4 right-4 z-50 flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-full border-2 border-white/50 overflow-hidden bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center font-bold text-white text-lg">
-            {group.profile_pic_url ? (
-              <img src={mediaUrl(group.profile_pic_url)} alt={group.username} className="w-full h-full object-cover" />
-            ) : (
-              group.username.charAt(0).toUpperCase()
-            )}
-          </div>
-          <div>
-            <p className="text-white font-bold text-sm drop-shadow">{group.full_name}</p>
-            <p className="text-white/60 text-xs drop-shadow">{formatTime(activeStory.created_at)}</p>
-          </div>
-        </div>
+        {/* Floating Next Button (Right) - visible on md screens */}
+        <button
+          onClick={(e) => { e.stopPropagation(); handleNext(); }}
+          className="absolute -right-16 hidden md:flex items-center justify-center w-11 h-11 rounded-full bg-white/10 hover:bg-white/20 border border-white/20 text-white transition-all active:scale-95 z-50 shadow-lg"
+        >
+          <ChevronRight size={24} />
+        </button>
 
-        <div className="flex items-center gap-3">
-          {isMyStory && (
-            <button
-              onClick={handleDelete}
-              disabled={isDeleting}
-              className="text-red-500 hover:text-red-400 p-2 transition-colors duration-150"
-            >
-              {isDeleting ? <Loader2 size={20} className="animate-spin" /> : <Trash2 size={20} />}
-            </button>
+        {/* Story Modal Card Container */}
+        <motion.div
+          initial={{ opacity: 0, scale: 0.9 }}
+          animate={{ opacity: 1, scale: 1 }}
+          exit={{ opacity: 0, scale: 0.9 }}
+          transition={{ type: 'spring', damping: 25, stiffness: 300 }}
+          className="relative w-full h-full sm:rounded-2xl overflow-hidden sm:border border-white/10 shadow-2xl flex flex-col justify-between bg-black"
+          onTouchStart={() => setIsPaused(true)}
+          onTouchEnd={() => setIsPaused(false)}
+          onMouseDown={() => setIsPaused(true)}
+          onMouseUp={() => setIsPaused(false)}
+        >
+          {/* Progress Bars */}
+          <div className="absolute top-4 left-4 right-4 z-50 flex gap-1.5">
+            {group.stories.map((story, idx) => (
+              <div key={story.id} className="h-1 flex-1 bg-white/20 rounded-full overflow-hidden">
+                <div
+                  className="h-full bg-white transition-all ease-linear"
+                  style={{
+                    width:
+                      idx < activeIndex
+                        ? '100%'
+                        : idx === activeIndex
+                        ? `${progress}%`
+                        : '0%',
+                  }}
+                />
+              </div>
+            ))}
+          </div>
+
+          {/* Story Header */}
+          <div className="absolute top-8 left-4 right-4 z-50 flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-full border-2 border-white/50 overflow-hidden bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center font-bold text-white text-lg">
+                {group.profile_pic_url ? (
+                  <img src={mediaUrl(group.profile_pic_url)} alt={group.username} className="w-full h-full object-cover" />
+                ) : (
+                  group.username.charAt(0).toUpperCase()
+                )}
+              </div>
+              <div>
+                <p className="text-white font-bold text-sm drop-shadow">{group.full_name}</p>
+                <p className="text-white/60 text-xs drop-shadow">{formatTime(activeStory.created_at)}</p>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-3">
+              {isMyStory && (
+                <button
+                  onClick={handleDelete}
+                  disabled={isDeleting}
+                  className="text-red-500 hover:text-red-400 p-2 transition-colors duration-150"
+                >
+                  {isDeleting ? <Loader2 size={20} className="animate-spin" /> : <Trash2 size={20} />}
+                </button>
+              )}
+              <button
+                onClick={(e) => { e.stopPropagation(); setIsPaused(p => !p); }}
+                className="text-white hover:opacity-80 p-2"
+              >
+                {isPaused ? <Play size={20} className="fill-white" /> : <Pause size={20} className="fill-white" />}
+              </button>
+              <button
+                onClick={(e) => { e.stopPropagation(); onClose(); }}
+                className="text-white hover:opacity-80 p-2"
+              >
+                <X size={24} />
+              </button>
+            </div>
+          </div>
+
+          {/* Tap Areas for Navigation */}
+          <div className="absolute inset-0 flex">
+            <div className="w-[35%] h-full cursor-w-resize" onClick={(e) => { e.stopPropagation(); handlePrev(); }} />
+            <div className="w-[30%] h-full" onClick={() => setIsPaused(p => !p)} />
+            <div className="w-[35%] h-full cursor-e-resize" onClick={(e) => { e.stopPropagation(); handleNext(); }} />
+          </div>
+
+          {/* Story Media */}
+          <div className="w-full h-full flex items-center justify-center bg-black/90">
+            <AnimatePresence mode="wait">
+              {activeStory.media_type === 'video' ? (
+                <video
+                  key={activeStory.id}
+                  src={mediaUrl(activeStory.media_url)}
+                  autoPlay
+                  playsInline
+                  className="max-h-full max-w-full object-contain"
+                />
+              ) : (
+                <motion.img
+                  key={activeStory.id}
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  src={mediaUrl(activeStory.media_url)}
+                  alt="Story"
+                  className="max-h-full max-w-full object-contain"
+                />
+              )}
+            </AnimatePresence>
+          </div>
+
+          {/* Story Caption / Footer */}
+          {activeStory.content && (
+            <div className="absolute bottom-10 left-4 right-4 z-40 bg-black/40 backdrop-blur-md p-4 rounded-2xl border border-white/10 text-center">
+              <p className="text-white text-base leading-relaxed font-medium">{activeStory.content}</p>
+            </div>
           )}
-          <button
-            onClick={(e) => { e.stopPropagation(); setIsPaused(p => !p); }}
-            className="text-white hover:opacity-80 p-2"
-          >
-            {isPaused ? <Play size={20} className="fill-white" /> : <Pause size={20} className="fill-white" />}
-          </button>
-          <button
-            onClick={(e) => { e.stopPropagation(); onClose(); }}
-            className="text-white hover:opacity-80 p-2"
-          >
-            <X size={24} />
-          </button>
-        </div>
+        </motion.div>
       </div>
-
-      {/* Tap Areas for Navigation */}
-      <div className="absolute inset-0 flex">
-        <div className="w-[35%] h-full cursor-w-resize" onClick={(e) => { e.stopPropagation(); handlePrev(); }} />
-        <div className="w-[30%] h-full" onClick={() => setIsPaused(p => !p)} />
-        <div className="w-[35%] h-full cursor-e-resize" onClick={(e) => { e.stopPropagation(); handleNext(); }} />
-      </div>
-
-      {/* Story Media */}
-      <div className="w-full h-full flex items-center justify-center bg-black/90">
-        <AnimatePresence mode="wait">
-          {activeStory.media_type === 'video' ? (
-            <video
-              key={activeStory.id}
-              src={mediaUrl(activeStory.media_url)}
-              autoPlay
-              playsInline
-              className="max-h-full max-w-full object-contain"
-            />
-          ) : (
-            <motion.img
-              key={activeStory.id}
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              src={mediaUrl(activeStory.media_url)}
-              alt="Story"
-              className="max-h-full max-w-full object-contain"
-            />
-          )}
-        </AnimatePresence>
-      </div>
-
-      {/* Story Caption / Footer */}
-      {activeStory.content && (
-        <div className="absolute bottom-10 left-4 right-4 z-40 bg-black/40 backdrop-blur-md p-4 rounded-2xl border border-white/10 text-center">
-          <p className="text-white text-base leading-relaxed font-medium">{activeStory.content}</p>
-        </div>
-      )}
-    </motion.div>
+    </div>,
+    document.body
   );
 }

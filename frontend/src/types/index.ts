@@ -31,6 +31,7 @@ export interface Post {
   // Interaction state
   is_liked?: number;
   is_reposted?: number;
+  is_saved?: number;
   // Media
   media: string[];
   // Repost info

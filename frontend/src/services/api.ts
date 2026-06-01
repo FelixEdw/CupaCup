@@ -80,6 +80,16 @@ export async function getAuthFeed() {
   return apiFetch<Post[]>('/api/posts/feed');
 }
 
+export async function getNotesFeed() {
+  return apiFetch<Post[]>('/api/posts/notes');
+}
+
+export async function getFollowingFeed() {
+  return apiFetch<Post[]>('/api/posts/following');
+}
+
+
+
 export async function toggleLike(postId: number) {
   return apiFetch<{ action: 'liked' | 'unliked' }>(`/api/posts/${postId}/like`, {
     method: 'POST',

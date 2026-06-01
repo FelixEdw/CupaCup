@@ -27,8 +27,12 @@ export default function RootLayout({
     <html lang="id" className="dark">
       <body className={`${inter.className} bg-black text-white antialiased`}>
         <HydrationWrapper>
-          {children}
-          <BottomNav />
+          <div className="flex flex-col h-dvh w-full overflow-hidden">
+            <div className="flex-1 overflow-hidden relative">
+              {children}
+            </div>
+            <BottomNav />
+          </div>
         </HydrationWrapper>
       </body>
     </html>

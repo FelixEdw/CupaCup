@@ -49,7 +49,7 @@ export default function MessagesPage() {
   };
 
   return (
-    <div className="min-h-screen bg-black pb-24">
+    <div className="h-full overflow-y-auto bg-black pb-12">
       <div className="sticky top-0 z-30 bg-black/90 backdrop-blur-md px-4 py-4 border-b border-white/10">
         <h1 className="text-white font-bold text-2xl mb-3">Messages</h1>
         <input

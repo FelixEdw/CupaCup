@@ -1,13 +1,14 @@
 'use client';
 
 import { usePathname, useRouter } from 'next/navigation';
-import { Home, Search, PlusSquare, MessageCircle, User } from 'lucide-react';
+import { Home, Search, FileText, PlusSquare, MessageCircle, User } from 'lucide-react';
 import { useAuthStore } from '@/store';
 import { motion } from 'framer-motion';
 
 const navItems = [
   { href: '/',         icon: Home,          label: 'Home'     },
   { href: '/explore',  icon: Search,        label: 'Explore'  },
+  { href: '/notes',    icon: FileText,      label: 'Cuapan'   },
   { href: '/create',   icon: PlusSquare,    label: 'Create'   },
   { href: '/messages', icon: MessageCircle, label: 'Messages' },
   { href: '/profile',  icon: User,          label: 'Profile'  },
@@ -31,7 +32,7 @@ export default function BottomNav() {
   if (HIDDEN_ON.some(re => re.test(pathname))) return null;
 
   const handleNav = (href: string) => {
-    if (!isAuthenticated && ['/create', '/messages', '/profile'].includes(href)) {
+    if (!isAuthenticated && ['/notes', '/create', '/messages', '/profile'].includes(href)) {
       router.push('/login');
       return;
     }
@@ -39,7 +40,7 @@ export default function BottomNav() {
   };
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-50 bg-black/90 backdrop-blur-xl border-t border-white/10">
+    <nav className="w-full bg-black border-t border-white/10 shrink-0 z-50">
       <div className="flex items-center justify-center gap-0 w-full px-0 py-2">
         {navItems.map(({ href, icon: Icon, label }) => {
           const isActive = pathname === href || (href !== '/' && pathname.startsWith(href));
@@ -51,7 +52,7 @@ export default function BottomNav() {
               onClick={() => handleNav(href)}
               whileTap={{ scale: 0.88 }}
               className="flex-1 flex flex-col items-center justify-center gap-1 py-2.5 min-w-0"
-              style={{ flexBasis: '20%' }}
+              style={{ flexBasis: '16.66%' }}
             >
               {isCreate ? (
                 /* TikTok-style create button */

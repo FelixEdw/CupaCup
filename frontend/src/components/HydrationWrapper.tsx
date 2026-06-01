@@ -18,16 +18,9 @@ const NO_NAV_PAGES: RegExp[] = [
  * and conditionally adds bottom padding only when nav is visible.
  */
 export default function HydrationWrapper({ children }: { children: React.ReactNode }) {
-  const pathname = usePathname();
-  const hasNav = !NO_NAV_PAGES.some(re => re.test(pathname));
-
   useEffect(() => {
     useAuthStore.persist.rehydrate();
   }, []);
 
-  return (
-    <main className={hasNav ? 'pb-16' : ''}>
-      {children}
-    </main>
-  );
+  return <>{children}</>;
 }

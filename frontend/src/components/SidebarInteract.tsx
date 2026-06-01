@@ -155,36 +155,11 @@ export default function SidebarInteract({ post, onComment }: SidebarInteractProp
 
   return (
     <>
-      <div className="flex flex-col items-center gap-4 pb-20">
-        {/* Avatar with follow indicator */}
-        <div className="relative">
-          <div
-            className="w-14 h-14 rounded-full overflow-hidden border-2 border-white ring-2 ring-transparent cursor-pointer"
-            onClick={() => router.push(`/profile/${post.username}`)}
-          >
-            {post.profile_pic_url ? (
-              <img
-                src={mediaUrl(post.profile_pic_url)}
-                alt={post.username}
-                className="w-full h-full object-cover"
-              />
-            ) : (
-              <div className="w-full h-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center text-white font-bold text-xl">
-                {post.username.charAt(0).toUpperCase()}
-              </div>
-            )}
-          </div>
-          {!isMyPost && (
-            <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-6 h-6 bg-[#FE2C55] rounded-full flex items-center justify-center shadow-lg border-2 border-black">
-              <span className="text-white text-sm font-bold leading-none">+</span>
-            </div>
-          )}
-        </div>
-
+      <div className="flex flex-col items-center gap-2.5 pb-2">
         {/* Like */}
         <motion.button
           onClick={handleLike}
-          className="flex flex-col items-center gap-1.5 group"
+          className="flex flex-col items-center gap-0.5 group"
           whileTap={{ scale: 0.85 }}
         >
           <AnimatePresence>
@@ -192,19 +167,19 @@ export default function SidebarInteract({ post, onComment }: SidebarInteractProp
               key={isLiked ? 'liked' : 'unliked'}
               initial={{ scale: likeAnim ? 1.5 : 1 }}
               animate={{ scale: 1 }}
-              className={`w-14 h-14 rounded-full flex items-center justify-center transition-all ${
+              className={`w-11 h-11 rounded-full flex items-center justify-center transition-all ${
                 isLiked
                   ? 'bg-[#FE2C55]/20'
                   : 'bg-black/30 group-hover:bg-white/10'
               }`}
             >
               <Heart
-                size={30}
+                size={22}
                 className={isLiked ? 'text-[#FE2C55] fill-[#FE2C55]' : 'text-white'}
               />
             </motion.div>
           </AnimatePresence>
-          <span className="text-white text-xs font-semibold drop-shadow-md">
+          <span className="text-white text-[11px] font-bold drop-shadow-md">
             {formatCount(post.like_count)}
           </span>
         </motion.button>
@@ -212,13 +187,13 @@ export default function SidebarInteract({ post, onComment }: SidebarInteractProp
         {/* Comment */}
         <motion.button
           onClick={onComment}
-          className="flex flex-col items-center gap-1.5 group"
+          className="flex flex-col items-center gap-0.5 group"
           whileTap={{ scale: 0.85 }}
         >
-          <div className="w-14 h-14 rounded-full bg-black/30 group-hover:bg-white/10 flex items-center justify-center transition-all">
-            <MessageCircle size={30} className="text-white" />
+          <div className="w-11 h-11 rounded-full bg-black/30 group-hover:bg-white/10 flex items-center justify-center transition-all">
+            <MessageCircle size={22} className="text-white" />
           </div>
-          <span className="text-white text-xs font-semibold drop-shadow-md">
+          <span className="text-white text-[11px] font-bold drop-shadow-md">
             {formatCount(post.reply_count)}
           </span>
         </motion.button>
@@ -226,16 +201,16 @@ export default function SidebarInteract({ post, onComment }: SidebarInteractProp
         {/* Repost */}
         <motion.button
           onClick={handleRepost}
-          className="flex flex-col items-center gap-1.5 group"
+          className="flex flex-col items-center gap-0.5 group"
           whileTap={{ scale: 0.85 }}
           disabled={isRepostLoading}
         >
-          <div className={`w-14 h-14 rounded-full flex items-center justify-center transition-all ${
+          <div className={`w-11 h-11 rounded-full flex items-center justify-center transition-all ${
             isReposted ? 'bg-green-500/20' : 'bg-black/30 group-hover:bg-white/10'
           }`}>
-            <Repeat2 size={30} className={isReposted ? 'text-green-400' : 'text-white'} />
+            <Repeat2 size={22} className={isReposted ? 'text-green-400' : 'text-white'} />
           </div>
-          <span className="text-white text-xs font-semibold drop-shadow-md">
+          <span className="text-white text-[11px] font-bold drop-shadow-md">
             {formatCount(repostCount)}
           </span>
         </motion.button>
@@ -243,49 +218,49 @@ export default function SidebarInteract({ post, onComment }: SidebarInteractProp
         {/* Bookmark / Save */}
         <motion.button
           onClick={handleSave}
-          className="flex flex-col items-center gap-1.5 group"
+          className="flex flex-col items-center gap-0.5 group"
           whileTap={{ scale: 0.85 }}
           disabled={isSaveLoading}
         >
-          <div className={`w-14 h-14 rounded-full flex items-center justify-center transition-all ${
+          <div className={`w-11 h-11 rounded-full flex items-center justify-center transition-all ${
             bookmarked ? 'bg-yellow-500/20' : 'bg-black/30 group-hover:bg-white/10'
           }`}>
             <Bookmark
-              size={30}
+              size={22}
               className={bookmarked ? 'text-yellow-400 fill-yellow-400' : 'text-white'}
             />
           </div>
-          <span className="text-white text-xs font-semibold drop-shadow-md">Save</span>
+          <span className="text-white text-[11px] font-bold drop-shadow-md">Save</span>
         </motion.button>
 
         {/* Share */}
         <motion.button
           onClick={openShare}
-          className="flex flex-col items-center gap-1.5 group"
+          className="flex flex-col items-center gap-0.5 group"
           whileTap={{ scale: 0.85 }}
         >
-          <div className="w-14 h-14 rounded-full bg-black/30 group-hover:bg-white/10 flex items-center justify-center transition-all">
-            <Share2 size={30} className="text-white" />
+          <div className="w-11 h-11 rounded-full bg-black/30 group-hover:bg-white/10 flex items-center justify-center transition-all">
+            <Share2 size={22} className="text-white" />
           </div>
-          <span className="text-white text-xs font-semibold drop-shadow-md">Share</span>
+          <span className="text-white text-[11px] font-bold drop-shadow-md">Share</span>
         </motion.button>
 
         {/* Delete (only for owner) */}
         {isMyPost && (
           <motion.button
             onClick={handleDeletePost}
-            className="flex flex-col items-center gap-1.5 group"
+            className="flex flex-col items-center gap-0.5 group"
             whileTap={{ scale: 0.85 }}
             disabled={isDeleteLoading}
           >
-            <div className="w-14 h-14 rounded-full bg-red-500/20 group-hover:bg-red-500/30 flex items-center justify-center transition-all">
+            <div className="w-11 h-11 rounded-full bg-red-500/20 group-hover:bg-red-500/30 flex items-center justify-center transition-all">
               {isDeleteLoading ? (
-                <Loader2 size={30} className="text-red-500 animate-spin" />
+                <Loader2 size={22} className="text-red-500 animate-spin" />
               ) : (
-                <Trash2 size={30} className="text-red-500" />
+                <Trash2 size={22} className="text-red-500" />
               )}
             </div>
-            <span className="text-red-500 text-xs font-semibold drop-shadow-md">Delete</span>
+            <span className="text-red-500 text-[11px] font-bold drop-shadow-md">Delete</span>
           </motion.button>
         )}
 
@@ -293,10 +268,10 @@ export default function SidebarInteract({ post, onComment }: SidebarInteractProp
         <motion.div
           animate={{ rotate: 360 }}
           transition={{ duration: 3, repeat: Infinity, ease: 'linear' }}
-          className="w-14 h-14 rounded-full bg-gradient-to-br from-gray-700 to-gray-900 border-4 border-gray-600 flex items-center justify-center shadow-lg"
+          className="w-11 h-11 rounded-full bg-gradient-to-br from-gray-700 to-gray-900 border-2 border-gray-600 flex items-center justify-center shadow-lg"
         >
-          <div className="w-5 h-5 rounded-full bg-white flex items-center justify-center">
-            <div className="w-2.5 h-2.5 rounded-full bg-gray-800" />
+          <div className="w-4 h-4 rounded-full bg-white flex items-center justify-center">
+            <div className="w-2 h-2 rounded-full bg-gray-800" />
           </div>
         </motion.div>
       </div>

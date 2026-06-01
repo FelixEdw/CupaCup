@@ -282,5 +282,41 @@ const deletePost = async (req, res) => {
   }
 };
 
-module.exports = { getFeed, getPublicFeed, getUserPosts, getPost, createPost, toggleLike, repost, toggleSave, getSavedPosts, getRepostedPosts, deletePost };
+// GET /api/posts/notes
+const getNotesFeed = async (req, res) => {
+  const viewerId = req.user.id;
+  try {
+    const [posts] = await buildPostQuery(
+      'WHERE p.parent_post_id IS NULL AND p.repost_id IS NULL AND p.id NOT IN (SELECT DISTINCT post_id FROM post_media)',
+      [],
+      viewerId
+    );
+    const result = await attachMedia(posts);
+    return res.status(200).json({ success: true, data: result });
+  } catch (err) {
+    console.error('[Post] getNotesFeed error:', err);
+    return res.status(500).json({ success: false, message: 'Terjadi kesalahan server.' });
+  }
+};
+
+// GET /api/posts/following
+const getFollowingFeed = async (req, res) => {
+  const viewerId = req.user.id;
+  try {
+    const [posts] = await buildPostQuery(
+      'WHERE p.parent_post_id IS NULL AND p.repost_id IS NULL AND p.user_id IN (SELECT followed_id FROM follows WHERE follower_id = ?)',
+      [viewerId],
+      viewerId
+    );
+    const result = await attachMedia(posts);
+    return res.status(200).json({ success: true, data: result });
+  } catch (err) {
+    console.error('[Post] getFollowingFeed error:', err);
+    return res.status(500).json({ success: false, message: 'Terjadi kesalahan server.' });
+  }
+};
+
+module.exports = { getFeed, getPublicFeed, getNotesFeed, getFollowingFeed, getUserPosts, getPost, createPost, toggleLike, repost, toggleSave, getSavedPosts, getRepostedPosts, deletePost };
+
+
 

@@ -108,7 +108,7 @@ export default function PostCard({ post, index, isActive, onVisible }: PostCardP
   return (
     <div
       ref={cardRef}
-      className="relative w-full h-screen snap-start flex-shrink-0 overflow-hidden bg-black"
+      className="relative w-full h-full snap-start flex-shrink-0 overflow-hidden bg-black"
     >
       {/* ── BACKGROUND LAYER ── */}
 
@@ -147,23 +147,9 @@ export default function PostCard({ post, index, isActive, onVisible }: PostCardP
         </div>
       )}
 
-      {/* ── POST TYPE BADGE ── */}
-      <div className="absolute top-16 left-4 z-20">
-        {postType === 'note' && (
-          <span className="bg-white/15 backdrop-blur-sm text-white text-xs font-semibold px-3 py-1 rounded-full border border-white/20">
-            📝 Note
-          </span>
-        )}
-        {postType === 'photo' && post.media.length > 1 && (
-          <span className="bg-black/40 backdrop-blur-sm text-white text-xs font-semibold px-3 py-1 rounded-full">
-            🖼 {post.media.length} foto
-          </span>
-        )}
-      </div>
-
       {/* ── BOTTOM: info + sidebar ── */}
-      {/* Extra bottom padding (pb-20) to clear BottomNav */}
-      <div className="absolute bottom-0 left-0 right-0 pb-20 px-4 pt-4 flex items-end gap-3 z-10">
+      <div className="absolute bottom-0 left-0 right-0 pb-6 px-4 pt-4 flex items-end gap-3 z-10">
+
         <div className="flex-1 pb-2">
           <BottomInfo post={post} />
         </div>

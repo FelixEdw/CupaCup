@@ -2,7 +2,7 @@
 
 import { useEffect, useCallback, useRef, useState } from 'react';
 import { useFeedStore } from '@/store';
-import { getAuthFeed } from '@/services/api';
+import { getAuthFeed, getNotesFeed, getFollowingFeed } from '@/services/api';
 import VideoCard from './VideoCard';
 import { Loader2, PenSquare } from 'lucide-react';
 import Link from 'next/link';
@@ -10,8 +10,8 @@ import Link from 'next/link';
 // Virtual window size — only render max 5 cards at a time
 const WINDOW_SIZE = 5;
 
-export default function VideoFeed() {
-  const { posts, currentIndex, setCurrentIndex, setPosts, setLoading, isLoading } = useFeedStore();
+export default function VideoFeed({ type = 'all' }: { type?: 'all' | 'notes' | 'foryou' | 'following' }) {
+  const { posts, currentIndex, setCurrentIndex, setPosts, setLoading, isLoading, resetFeed } = useFeedStore();
   const [error, setError] = useState<string | null>(null);
   const feedRef = useRef<HTMLDivElement>(null);
   const hasFetched = useRef(false);
@@ -21,7 +21,15 @@ export default function VideoFeed() {
     hasFetched.current = true;
     setLoading(true);
     try {
-      const res = await getAuthFeed();
+      let res;
+      if (type === 'notes') {
+        res = await getNotesFeed();
+      } else if (type === 'following') {
+        res = await getFollowingFeed();
+      } else {
+        res = await getAuthFeed();
+      }
+
       if (res.success && res.data) {
         setPosts(res.data);
       } else {
@@ -32,11 +40,14 @@ export default function VideoFeed() {
     } finally {
       setLoading(false);
     }
-  }, [setPosts, setLoading]);
+  }, [setPosts, setLoading, type]);
 
   useEffect(() => {
+    resetFeed();
+    hasFetched.current = false;
     fetchFeed();
-  }, [fetchFeed]);
+  }, [type, fetchFeed, resetFeed]);
+
 
   // Compute the virtual window
   const start = Math.max(0, currentIndex - 1);
@@ -52,7 +63,7 @@ export default function VideoFeed() {
 
   if (isLoading) {
     return (
-      <div className="h-screen flex items-center justify-center bg-black">
+      <div className="h-full flex items-center justify-center bg-black">
         <div className="flex flex-col items-center gap-3">
           <Loader2 className="text-[#FE2C55] animate-spin" size={40} />
           <p className="text-white/60 text-sm">Memuat post...</p>
@@ -63,7 +74,8 @@ export default function VideoFeed() {
 
   if (error) {
     return (
-      <div className="h-screen flex items-center justify-center bg-black">
+      <div className="h-full flex items-center justify-center bg-black">
+
         <div className="flex flex-col items-center gap-4 text-center px-6">
           <div className="text-5xl">😞</div>
           <p className="text-white text-lg font-semibold">{error}</p>
@@ -84,7 +96,7 @@ export default function VideoFeed() {
 
   if (posts.length === 0) {
     return (
-      <div className="h-screen flex flex-col items-center justify-center bg-black gap-5 px-8 text-center">
+      <div className="h-full flex flex-col items-center justify-center bg-black gap-5 px-8 text-center">
         <div className="text-6xl">✨</div>
         <p className="text-white text-xl font-bold">Feed masih kosong</p>
         <p className="text-white/50 text-sm leading-relaxed">
@@ -104,7 +116,7 @@ export default function VideoFeed() {
   return (
     <div
       ref={feedRef}
-      className="h-screen overflow-y-scroll snap-y snap-mandatory scrollbar-hide"
+      className="h-full overflow-y-scroll snap-y snap-mandatory scrollbar-hide"
       style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
     >
       {windowedPosts.map((post, i) => {
@@ -122,7 +134,7 @@ export default function VideoFeed() {
 
       {/* Loading more indicator */}
       {currentIndex >= posts.length - 2 && (
-        <div className="h-screen flex items-center justify-center bg-black snap-start">
+        <div className="h-full flex items-center justify-center bg-black snap-start">
           <div className="flex flex-col items-center gap-3">
             <Loader2 className="text-[#FE2C55] animate-spin" size={32} />
             <p className="text-white/60 text-sm">Memuat lebih banyak...</p>

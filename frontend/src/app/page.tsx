@@ -11,6 +11,7 @@ export default function HomePage() {
   const { isAuthenticated } = useAuthStore();
   const router = useRouter();
   const [checked, setChecked] = useState(false);
+  const [feedType, setFeedType] = useState<'foryou' | 'following'>('foryou');
 
   // Wait for Zustand hydration then check auth
   useEffect(() => {
@@ -35,7 +36,7 @@ export default function HomePage() {
   // Show spinner until hydration check done
   if (!checked) {
     return (
-      <div className="h-screen bg-black flex items-center justify-center">
+      <div className="h-full bg-black flex items-center justify-center">
         <div className="w-8 h-8 border-2 border-[#FE2C55] border-t-transparent rounded-full animate-spin" />
       </div>
     );
@@ -44,35 +45,47 @@ export default function HomePage() {
   if (!isAuthenticated) return null;
 
   return (
-    <div className="relative h-screen overflow-hidden bg-black">
-      {/* Top bar — hapus LIVE, sisakan For You & Following */}
-      <div className="absolute top-0 left-0 right-0 z-30 flex items-center justify-between px-4 pt-3 pb-2">
-        {/* Logo kiri */}
-        <span className="text-white font-black text-lg tracking-tight gradient-text">MatchUp</span>
-
-        {/* Tab tengah */}
-        <div className="flex items-center gap-6">
-          <button className="text-white/50 text-[15px] font-semibold hover:text-white transition-colors">
+    <div className="relative h-full overflow-hidden bg-black">
+      {/* Top bar — Centered, premium styling with HSL/transparent black backdrop */}
+      <div className="absolute top-0 left-0 right-0 z-30 flex items-center justify-center gap-8 pt-4 pb-2 bg-gradient-to-b from-black/60 to-transparent">
+        {/* Following Tab */}
+        <div className="flex flex-col items-center">
+          <button
+            onClick={() => setFeedType('following')}
+            className={`text-[16px] font-semibold transition-all ${
+              feedType === 'following' ? 'text-white font-bold' : 'text-white/50 hover:text-white'
+            }`}
+          >
             Following
           </button>
-          <div className="flex flex-col items-center">
-            <button className="text-white text-[15px] font-bold">For You</button>
-            <div className="w-5 h-0.5 bg-white rounded-full mt-0.5" />
-          </div>
+          <div
+            className={`w-6 h-0.5 bg-[#FE2C55] rounded-full mt-1 transition-all ${
+              feedType === 'following' ? 'opacity-100 scale-100' : 'opacity-0 scale-50'
+            }`}
+          />
         </div>
 
-        {/* Tombol buat post kanan */}
-        <Link
-          href="/create"
-          className="flex items-center gap-1.5 bg-white/10 hover:bg-white/20 border border-white/20 rounded-full px-3 py-1.5 transition-all"
-        >
-          <PenSquare size={14} className="text-white" />
-          <span className="text-white text-xs font-semibold">Post</span>
-        </Link>
+        {/* For You Tab */}
+        <div className="flex flex-col items-center">
+          <button
+            onClick={() => setFeedType('foryou')}
+            className={`text-[16px] font-semibold transition-all ${
+              feedType === 'foryou' ? 'text-white font-bold' : 'text-white/50 hover:text-white'
+            }`}
+          >
+            For You
+          </button>
+          <div
+            className={`w-6 h-0.5 bg-[#FE2C55] rounded-full mt-1 transition-all ${
+              feedType === 'foryou' ? 'opacity-100 scale-100' : 'opacity-0 scale-50'
+            }`}
+          />
+        </div>
       </div>
 
       {/* Feed */}
-      <VideoFeed />
+      <VideoFeed type={feedType} />
     </div>
   );
 }
+

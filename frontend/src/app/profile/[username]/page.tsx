@@ -3,13 +3,23 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
-import { ArrowLeft, Grid, Heart, Repeat2, Bookmark, Settings } from 'lucide-react';
+import { ArrowLeft, Grid, FileText, Heart, Repeat2, Bookmark, Settings, MessageCircle } from 'lucide-react';
 import { getUserProfile, getUserPosts, toggleFollow, getSavedPosts, getRepostedPosts } from '@/services/api';
 import { mediaUrl } from '@/services/api';
 import { useAuthStore } from '@/store';
 import { User, Post } from '@/types';
 
-type TabType = 'posts' | 'reposted' | 'saved';
+type TabType = 'posts' | 'notes' | 'reposted' | 'saved';
+
+const NOTE_GRADIENTS = [
+  'from-[#1a1a2e] via-[#16213e] to-[#0f3460]',
+  'from-[#2d1b69] via-[#11998e] to-[#38ef7d]',
+  'from-[#360033] via-[#0b8793] to-[#360033]',
+  'from-[#200122] via-[#6f0000] to-[#200122]',
+  'from-[#0f0c29] via-[#302b63] to-[#24243e]',
+  'from-[#1f4037] via-[#99f2c8] to-[#1f4037]',
+  'from-[#2c3e50] via-[#fd746c] to-[#2c3e50]',
+];
 
 export default function ProfilePage() {
   const params = useParams();
@@ -21,7 +31,7 @@ export default function ProfilePage() {
   const [posts, setPosts] = useState<Post[]>([]);
   const [repostedPosts, setRepostedPosts] = useState<Post[]>([]);
   const [savedPosts, setSavedPosts] = useState<Post[]>([]);
-  const [activeTab, setActiveTab] = useState<TabType>('posts');
+  const [activeTab, setActiveTab] = useState<TabType>('notes');
   const [isLoading, setIsLoading] = useState(true);
   const [isFollowing, setIsFollowing] = useState(false);
   const [isFollowLoading, setIsFollowLoading] = useState(false);
@@ -108,36 +118,28 @@ export default function ProfilePage() {
   };
 
   const currentPosts =
-    activeTab === 'posts' ? posts :
-    activeTab === 'reposted' ? repostedPosts :
-    savedPosts;
+    activeTab === 'posts' ? posts.filter(p => p.media && p.media.length > 0) :
+      activeTab === 'notes' ? posts.filter(p => !p.media || p.media.length === 0) :
+        activeTab === 'reposted' ? repostedPosts :
+          savedPosts;
+
 
   return (
-    <div className="min-h-screen bg-black pb-24">
+    <div className="h-full overflow-y-auto bg-black pb-12">
       {/* Header */}
       <div className="sticky top-0 z-30 bg-black/80 backdrop-blur-md flex items-center gap-3 px-4 py-4 border-b border-white/10">
         <button onClick={() => router.back()} className="text-white hover:text-white/70 p-1">
           <ArrowLeft size={24} />
         </button>
-        <h1 className="text-white font-bold text-xl">@{profile.username}</h1>
-        {isMyProfile && (
-          <button className="ml-auto text-white hover:text-white/70 p-1" onClick={() => router.push('/settings')}>
-            <Settings size={24} />
-          </button>
+        {!isMyProfile && (
+          <h1 className="text-white font-bold text-xl">@{profile.username}</h1>
         )}
       </div>
 
-      {/* Cover */}
-      <div className="relative h-44 bg-gradient-to-br from-[#FE2C55]/40 to-[#25F4EE]/20">
-        {profile.cover_pic_url && (
-          <img src={mediaUrl(profile.cover_pic_url)} alt="Cover" className="w-full h-full object-cover" />
-        )}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent" />
-      </div>
-
-      {/* Avatar & Actions */}
-      <div className="px-5 -mt-14 flex items-end justify-between mb-5">
-        <div className="w-28 h-28 rounded-full border-4 border-black overflow-hidden">
+      {/* Centered Profile Header */}
+      <div className="flex flex-col items-center text-center px-5 mt-6 mb-6">
+        {/* Avatar */}
+        <div className="w-24 h-24 rounded-full overflow-hidden border-2 border-white/20 mb-4 shadow-lg shrink-0">
           {profile.profile_pic_url ? (
             <img src={mediaUrl(profile.profile_pic_url)} alt={profile.username} className="w-full h-full object-cover" />
           ) : (
@@ -147,11 +149,20 @@ export default function ProfilePage() {
           )}
         </div>
 
-        <div className="flex gap-2 mt-14">
+        {/* Profile Info */}
+        <h2 className="text-white font-bold text-2xl mb-1">{profile.full_name}</h2>
+        <p className="text-white/50 text-sm mb-3">@{profile.username}</p>
+
+        {profile.bio && (
+          <p className="text-white/90 text-sm leading-relaxed max-w-sm mb-4">{profile.bio}</p>
+        )}
+
+        {/* Actions Button */}
+        <div className="flex gap-2 mb-6">
           {isMyProfile ? (
             <button
               onClick={() => router.push('/settings')}
-              className="px-6 py-2.5 border border-white/30 rounded-xl text-white text-sm font-semibold hover:bg-white/10 transition-all"
+              className="px-10 py-3 border border-white/30 rounded-xl text-white text-xs font-bold hover:bg-white/10 transition-all shadow-md"
             >
               Edit Profil
             </button>
@@ -159,36 +170,26 @@ export default function ProfilePage() {
             <button
               onClick={handleFollow}
               disabled={isFollowLoading}
-              className={`px-7 py-2.5 rounded-xl text-sm font-bold transition-all ${
-                isFollowing
+              className={`px-10 py-3 rounded-xl text-xs font-bold transition-all shadow-md ${isFollowing
                   ? 'border border-white/30 text-white hover:bg-white/10'
                   : 'bg-[#FE2C55] text-white hover:bg-[#e0243c]'
-              }`}
+                }`}
             >
               {isFollowLoading ? '...' : isFollowing ? 'Following' : 'Follow'}
             </button>
           )}
         </div>
-      </div>
 
-      {/* Profile info */}
-      <div className="px-5 mb-6">
-        <h2 className="text-white font-bold text-2xl mb-1">{profile.full_name}</h2>
-        <p className="text-white/50 text-base mb-3">@{profile.username}</p>
-        {profile.bio && (
-          <p className="text-white/90 text-base leading-relaxed mb-4">{profile.bio}</p>
-        )}
-
-        {/* Stats */}
-        <div className="flex gap-7">
+        {/* Stats Grid */}
+        <div className="flex gap-10">
           {[
             { label: 'Posts', value: profile.posts_count },
             { label: 'Followers', value: profile.followers_count },
             { label: 'Following', value: profile.following_count },
           ].map(({ label, value }) => (
-            <div key={label} className="text-center">
+            <div key={label} className="text-center min-w-[75px]">
               <div className="text-white font-bold text-xl">{formatNum(value)}</div>
-              <div className="text-white/50 text-sm">{label}</div>
+              <div className="text-white/50 text-xs mt-0.5">{label}</div>
             </div>
           ))}
         </div>
@@ -197,14 +198,25 @@ export default function ProfilePage() {
       {/* Tabs */}
       <div className="border-t border-white/10">
         <div className="flex border-b border-white/10">
+          {/* Notes tab */}
+          <button
+            onClick={() => setActiveTab('notes')}
+            className={`flex-1 flex items-center justify-center gap-2 py-4 transition-colors ${activeTab === 'notes'
+                ? 'text-white border-b-2 border-white'
+                : 'text-white/40 hover:text-white/70'
+              }`}
+          >
+            <FileText size={20} />
+            <span className="text-sm font-semibold">Cuapan</span>
+          </button>
+
           {/* Posts tab */}
           <button
             onClick={() => setActiveTab('posts')}
-            className={`flex-1 flex items-center justify-center gap-2 py-4 transition-colors ${
-              activeTab === 'posts'
+            className={`flex-1 flex items-center justify-center gap-2 py-4 transition-colors ${activeTab === 'posts'
                 ? 'text-white border-b-2 border-white'
                 : 'text-white/40 hover:text-white/70'
-            }`}
+              }`}
           >
             <Grid size={20} />
             <span className="text-sm font-semibold">Posts</span>
@@ -213,11 +225,10 @@ export default function ProfilePage() {
           {/* Reposted tab */}
           <button
             onClick={() => setActiveTab('reposted')}
-            className={`flex-1 flex items-center justify-center gap-2 py-4 transition-colors ${
-              activeTab === 'reposted'
+            className={`flex-1 flex items-center justify-center gap-2 py-4 transition-colors ${activeTab === 'reposted'
                 ? 'text-white border-b-2 border-white'
                 : 'text-white/40 hover:text-white/70'
-            }`}
+              }`}
           >
             <Repeat2 size={20} />
             <span className="text-sm font-semibold">Reposted</span>
@@ -227,11 +238,10 @@ export default function ProfilePage() {
           {isMyProfile && (
             <button
               onClick={() => setActiveTab('saved')}
-              className={`flex-1 flex items-center justify-center gap-2 py-4 transition-colors ${
-                activeTab === 'saved'
+              className={`flex-1 flex items-center justify-center gap-2 py-4 transition-colors ${activeTab === 'saved'
                   ? 'text-white border-b-2 border-white'
                   : 'text-white/40 hover:text-white/70'
-              }`}
+                }`}
             >
               <Bookmark size={20} />
               <span className="text-sm font-semibold">Saved</span>
@@ -243,15 +253,111 @@ export default function ProfilePage() {
         {currentPosts.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-20 gap-3">
             <div className="text-5xl">
-              {activeTab === 'posts' ? '📭' : activeTab === 'reposted' ? '🔁' : '🔖'}
+              {activeTab === 'posts' ? '📭' : activeTab === 'notes' ? '📝' : activeTab === 'reposted' ? '' : ''}
             </div>
             <p className="text-white/60 text-base">
               {activeTab === 'posts'
                 ? 'Belum ada post'
-                : activeTab === 'reposted'
-                ? 'Belum ada repost'
-                : 'Belum ada yang disimpan'}
+                : activeTab === 'notes'
+                  ? 'Belum ada catatan'
+                  : activeTab === 'reposted'
+                    ? 'Belum ada repost'
+                    : 'Belum ada yang disimpan'}
             </p>
+          </div>
+        ) : activeTab === 'notes' ? (
+          <div className="flex flex-col divide-y divide-white/10 border-t border-white/10">
+            {currentPosts.map((post) => (
+              <motion.div
+                key={post.id}
+                whileTap={{ opacity: 0.95 }}
+                onClick={() => router.push(`/post/${post.id}`)}
+                className="flex gap-4 p-4 hover:bg-white/5 cursor-pointer transition-colors"
+              >
+                {/* Left side: Avatar */}
+                <div className="w-11 h-11 rounded-full overflow-hidden shrink-0 border border-white/10">
+                  {profile.profile_pic_url ? (
+                    <img
+                      src={mediaUrl(profile.profile_pic_url)}
+                      alt={profile.username}
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <div className="w-full h-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center text-white font-bold text-lg">
+                      {profile.username.charAt(0).toUpperCase()}
+                    </div>
+                  )}
+                </div>
+
+                {/* Right side: Note card details */}
+                <div className="flex-1 min-w-0">
+                  {/* Header Row */}
+                  <div className="flex items-center gap-1.5 flex-wrap">
+                    <span className="text-white font-bold text-[15px] hover:underline leading-tight truncate">
+                      {profile.full_name}
+                    </span>
+                    <span className="text-white/40 text-[14px] truncate leading-tight">
+                      @{profile.username}
+                    </span>
+                    <span className="text-white/30 text-[14px] leading-tight shrink-0">•</span>
+                    <span className="text-white/40 text-[14px] leading-tight shrink-0">
+                      {new Date(post.created_at).toLocaleDateString('id-ID', {
+                        day: 'numeric',
+                        month: 'short',
+                      })}
+                    </span>
+                  </div>
+
+                  {/* Content */}
+                  <p className="text-white text-[15px] mt-1.5 leading-relaxed break-words whitespace-pre-wrap">
+                    {post.content}
+                  </p>
+
+                  {/* Actions Bar (Twitter style) */}
+                  <div className="flex items-center justify-between max-w-sm mt-4 pt-1 text-white/50">
+                    {/* Reply button */}
+                    <button className="flex items-center gap-2.5 hover:text-[#FE2C55] transition-colors group">
+                      <div className="p-2 rounded-full group-hover:bg-[#FE2C55]/10">
+                        <MessageCircle size={16} />
+                      </div>
+                      <span className="text-xs">{formatNum(post.reply_count)}</span>
+                    </button>
+
+                    {/* Repost button */}
+                    <button
+                      className={`flex items-center gap-2.5 hover:text-green-500 transition-colors group ${post.is_reposted ? 'text-green-500' : ''
+                        }`}
+                    >
+                      <div className="p-2 rounded-full group-hover:bg-green-500/10">
+                        <Repeat2 size={16} />
+                      </div>
+                      <span className="text-xs">{formatNum(post.repost_count)}</span>
+                    </button>
+
+                    {/* Like button */}
+                    <button
+                      className={`flex items-center gap-2.5 hover:text-[#FE2C55] transition-colors group ${post.is_liked ? 'text-[#FE2C55]' : ''
+                        }`}
+                    >
+                      <div className="p-2 rounded-full group-hover:bg-[#FE2C55]/10">
+                        <Heart size={16} className={post.is_liked ? 'fill-[#FE2C55] text-[#FE2C55]' : ''} />
+                      </div>
+                      <span className="text-xs">{formatNum(post.like_count)}</span>
+                    </button>
+
+                    {/* Bookmark button */}
+                    <button
+                      className={`flex items-center gap-2.5 hover:text-yellow-500 transition-colors group ${post.is_saved ? 'text-yellow-500' : ''
+                        }`}
+                    >
+                      <div className="p-2 rounded-full group-hover:bg-yellow-500/10">
+                        <Bookmark size={16} className={post.is_saved ? 'fill-yellow-500' : ''} />
+                      </div>
+                    </button>
+                  </div>
+                </div>
+              </motion.div>
+            ))}
           </div>
         ) : (
           <div className="grid grid-cols-3 gap-0.5">
@@ -278,8 +384,10 @@ export default function ProfilePage() {
                     />
                   )
                 ) : (
-                  <div className="w-full h-full flex items-center justify-center p-3">
-                    <p className="text-white/60 text-xs text-center line-clamp-4">{post.content}</p>
+                  <div className={`w-full h-full bg-gradient-to-br ${NOTE_GRADIENTS[post.id % NOTE_GRADIENTS.length]} flex items-center justify-center p-3 relative`}>
+                    <p className="text-white text-xs font-semibold text-center line-clamp-4 leading-relaxed px-1">
+                      "{post.content}"
+                    </p>
                   </div>
                 )}
                 {/* Like overlay */}

@@ -23,7 +23,7 @@ export default function VideoPlayer({
   // Detect if media is a video
   const videoSrc = src || (mediaUrls && mediaUrls.length > 0 ? mediaUrls[0] : undefined);
   const isVideo = videoSrc
-    ? /\.(mp4|webm|ogg|mov)(\?.*)?$/i.test(videoSrc) || videoSrc.includes('/uploads/posts')
+    ? /\.(mp4|webm|ogg|mov|avi|mkv)(\?.*)?$/i.test(videoSrc)
     : false;
 
   const fullSrc = videoSrc ? mediaUrl(videoSrc) : undefined;

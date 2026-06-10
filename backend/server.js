@@ -57,7 +57,7 @@ app.use('/api/stories',       require('./src/routes/storyRoutes'));
 app.get('/api/health', (req, res) => {
   res.json({
     success: true,
-    service: 'MatchUp Core API',
+    service: 'CuapCuap Core API',
     version: '1.0.0',
     timestamp: new Date().toISOString(),
   });
@@ -65,7 +65,7 @@ app.get('/api/health', (req, res) => {
 
 // ─── Root ──────────────────────────────────────────────────────────────────────
 app.get('/', (req, res) => {
-  res.json({ message: '🚀 MatchUp SuperApp — Core API v1.0' });
+  res.json({ message: '🚀 CuapCuap SuperApp — Core API v1.0' });
 });
 
 // ─── 404 Handler ──────────────────────────────────────────────────────────────
@@ -85,7 +85,7 @@ app.use((err, req, res, next) => {
 // ─── Start ────────────────────────────────────────────────────────────────────
 const PORT = process.env.PORT || 3001;
 server.listen(PORT, () => {
-  console.log(`\n🚀 MatchUp Core API running on http://localhost:${PORT}`);
+  console.log(`\n🚀 CuapCuap Core API running on http://localhost:${PORT}`);
   console.log(`📡 Socket.IO ready on ws://localhost:${PORT}/chat`);
   console.log(`🌍 Environment: ${process.env.NODE_ENV || 'development'}\n`);
 });

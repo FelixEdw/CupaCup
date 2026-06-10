@@ -1,4 +1,5 @@
 const db = require('../config/db');
+const { createNotification } = require('../utils/notifHelper');
 
 // Helper: get full post with media, like status, repost info
 const buildPostQuery = (extraWhere = '', params = [], viewerId = null) => {
@@ -124,6 +125,11 @@ const createPost = async (req, res) => {
     // If reply, increment parent reply_count
     if (parent_post_id) {
       await db.query('UPDATE posts SET reply_count = reply_count + 1 WHERE id = ?', [parent_post_id]);
+      // Trigger reply notification to the parent post owner
+      const [parentRows] = await db.query('SELECT user_id FROM posts WHERE id = ?', [parent_post_id]);
+      if (parentRows.length > 0) {
+        await createNotification(parentRows[0].user_id, userId, 'reply', postId);
+      }
     }
 
     const [newPost] = await db.query(
@@ -151,6 +157,11 @@ const toggleLike = async (req, res) => {
     } else {
       await db.query('INSERT INTO likes (user_id, post_id) VALUES (?, ?)', [userId, postId]);
       await db.query('UPDATE posts SET like_count = like_count + 1 WHERE id = ?', [postId]);
+      // Trigger like notification to the post author
+      const [postRows] = await db.query('SELECT user_id FROM posts WHERE id = ?', [postId]);
+      if (postRows.length > 0) {
+        await createNotification(postRows[0].user_id, userId, 'like', postId);
+      }
       return res.status(200).json({ success: true, action: 'liked' });
     }
   } catch (err) {
@@ -177,6 +188,11 @@ const repost = async (req, res) => {
     }
     await db.query('INSERT INTO posts (user_id, repost_id) VALUES (?, ?)', [userId, targetPostId]);
     await db.query('UPDATE posts SET repost_count = repost_count + 1 WHERE id = ?', [targetPostId]);
+    // Trigger repost notification to the original post author
+    const [targetRows] = await db.query('SELECT user_id FROM posts WHERE id = ?', [targetPostId]);
+    if (targetRows.length > 0) {
+      await createNotification(targetRows[0].user_id, userId, 'repost', targetPostId);
+    }
     return res.status(201).json({ success: true, action: 'reposted' });
   } catch (err) {
     console.error('[Post] repost error:', err);
@@ -316,7 +332,39 @@ const getFollowingFeed = async (req, res) => {
   }
 };
 
-module.exports = { getFeed, getPublicFeed, getNotesFeed, getFollowingFeed, getUserPosts, getPost, createPost, toggleLike, repost, toggleSave, getSavedPosts, getRepostedPosts, deletePost };
+const getTrendingTags = async (req, res) => {
+  try {
+    const [posts] = await db.query(
+      'SELECT content FROM posts WHERE content IS NOT NULL AND parent_post_id IS NULL AND repost_id IS NULL ORDER BY created_at DESC LIMIT 150'
+    );
+
+    const tagCounts = {};
+    const tagRegex = /#(\w+)/g;
+
+    posts.forEach(post => {
+      const content = post.content;
+      const matches = content.match(tagRegex);
+      if (matches) {
+        matches.forEach(m => {
+          const tag = m.toLowerCase();
+          tagCounts[tag] = (tagCounts[tag] || 0) + 1;
+        });
+      }
+    });
+
+    const sortedTags = Object.keys(tagCounts)
+      .map(tag => ({ tag, count: tagCounts[tag] }))
+      .sort((a, b) => b.count - a.count)
+      .slice(0, 10);
+
+    return res.status(200).json({ success: true, data: sortedTags });
+  } catch (err) {
+    console.error('[Post] getTrendingTags error:', err);
+    return res.status(500).json({ success: false, message: 'Terjadi kesalahan server.' });
+  }
+};
+
+module.exports = { getFeed, getPublicFeed, getNotesFeed, getFollowingFeed, getUserPosts, getPost, createPost, toggleLike, repost, toggleSave, getSavedPosts, getRepostedPosts, deletePost, getTrendingTags };
 
 
 

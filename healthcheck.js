@@ -48,7 +48,7 @@ function testHttp(label, opts) {
 }
 
 async function main() {
-  console.log('=== MATCHUP HEALTH CHECK ===\n');
+  console.log('=== CUAPCUAP HEALTH CHECK ===\n');
 
   // 1. Port checks
   const frontOk  = await testPort(3000, 'Frontend');

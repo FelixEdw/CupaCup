@@ -70,7 +70,7 @@ export default function SettingsPage() {
   const currentAvatar = avatarPreview || (user?.profile_pic_url ? mediaUrl(user.profile_pic_url) : null);
 
   return (
-    <div className="min-h-screen bg-black">
+    <div className="h-full overflow-y-auto bg-black pb-24">
       <div className="sticky top-0 z-30 bg-black/90 backdrop-blur-md flex items-center gap-3 px-4 py-3 border-b border-white/10">
         <button onClick={() => router.back()} className="text-white hover:text-white/70">
           <ArrowLeft size={22} />

@@ -2,7 +2,7 @@ import { User, Post, ApiResponse, StoryGroup, Conversation } from '@/types';
 
 let API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
 
-if (typeof window !== 'undefined') {
+if (typeof window !== 'undefined' && typeof window.location !== 'undefined') {
   const hostname = window.location.hostname;
   if (hostname !== 'localhost' && hostname !== '127.0.0.1' && !hostname.startsWith('192.168.0.')) {
     API_BASE = `http://${hostname}:3001`;
@@ -31,7 +31,7 @@ async function apiFetch<T>(
 
   // Handle auth errors — clear token and redirect to login
   if (res.status === 401 || res.status === 403) {
-    if (typeof window !== 'undefined') {
+    if (typeof window !== 'undefined' && typeof window.location !== 'undefined') {
       localStorage.removeItem('matchup_token');
       // Only redirect if not already on login page
       if (!window.location.pathname.startsWith('/login')) {
@@ -86,6 +86,10 @@ export async function getNotesFeed() {
 
 export async function getFollowingFeed() {
   return apiFetch<Post[]>('/api/posts/following');
+}
+
+export async function getTrendingTags() {
+  return apiFetch<any[]>('/api/posts/trending-tags');
 }
 
 
@@ -161,6 +165,14 @@ export async function toggleFollow(userId: number) {
 
 export async function searchUsers(q: string) {
   return apiFetch<User[]>(`/api/users/search?q=${encodeURIComponent(q)}`);
+}
+
+export async function getCreators() {
+  return apiFetch<User[]>('/api/users/creators');
+}
+
+export async function getNotifications() {
+  return apiFetch<any[]>('/api/users/me/notifications');
 }
 
 export async function updateProfile(formData: FormData) {

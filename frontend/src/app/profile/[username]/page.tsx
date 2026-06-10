@@ -125,14 +125,27 @@ export default function ProfilePage() {
 
 
   return (
-    <div className="h-full overflow-y-auto bg-black pb-12">
+    <div className="h-full overflow-y-auto bg-black pb-24">
       {/* Header */}
-      <div className="sticky top-0 z-30 bg-black/80 backdrop-blur-md flex items-center gap-3 px-4 py-4 border-b border-white/10">
-        <button onClick={() => router.back()} className="text-white hover:text-white/70 p-1">
-          <ArrowLeft size={24} />
-        </button>
-        {!isMyProfile && (
-          <h1 className="text-white font-bold text-xl">@{profile.username}</h1>
+      <div className="sticky top-0 z-30 bg-black/80 backdrop-blur-md flex items-center justify-between px-4 py-4 border-b border-white/10">
+        <div className="flex items-center gap-3">
+          <button onClick={() => router.back()} className="text-white hover:text-white/70 p-1">
+            <ArrowLeft size={24} />
+          </button>
+          {!isMyProfile && (
+            <h1 className="text-white font-bold text-xl">@{profile.username}</h1>
+          )}
+          {isMyProfile && (
+            <h1 className="text-white font-bold text-xl">Profil Saya</h1>
+          )}
+        </div>
+        {isMyProfile && (
+          <button
+            onClick={() => router.push('/settings')}
+            className="text-white hover:text-white/70 p-1"
+          >
+            <Settings size={22} />
+          </button>
         )}
       </div>
 
@@ -158,14 +171,25 @@ export default function ProfilePage() {
         )}
 
         {/* Actions Button */}
-        <div className="flex gap-2 mb-6">
+        <div className="flex gap-2.5 mb-6">
           {isMyProfile ? (
-            <button
-              onClick={() => router.push('/settings')}
-              className="px-10 py-3 border border-white/30 rounded-xl text-white text-xs font-bold hover:bg-white/10 transition-all shadow-md"
-            >
-              Edit Profil
-            </button>
+            <>
+              <button
+                onClick={() => router.push('/settings')}
+                className="px-8 py-3 border border-white/30 rounded-xl text-white text-xs font-bold hover:bg-white/10 transition-all shadow-md"
+              >
+                Edit Profil
+              </button>
+              <button
+                onClick={() => {
+                  useAuthStore.getState().logout();
+                  router.replace('/login');
+                }}
+                className="px-8 py-3 border border-red-500/35 hover:bg-red-500/10 rounded-xl text-red-400 text-xs font-bold transition-all shadow-md"
+              >
+                Keluar
+              </button>
+            </>
           ) : (
             <button
               onClick={handleFollow}
